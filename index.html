@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GBA Journey • 极致漫游攻略</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500&display=swap"
+        rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'mag-gold': '#C5A059',
+                        'mag-bg': '#F8F9FA',
+                        'mag-navy': '#1A233A',
+                    },
+                    fontFamily: {
+                        'serif': ['"Playfair Display"', '"Noto Serif SC"', 'serif'],
+                        'sans': ['"Outfit"', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #F8F9FA;
+            color: #374151;
+            scroll-behavior: smooth;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* --- VISUAL SYSTEM V20 --- */
+
+        .card-base {
+            padding: 24px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Type 1: VISIT (White + Shadow) */
+        .type-visit {
+            background: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid white;
+        }
+
+        /* Type 2: MEAL (Warm Ivory) */
+        .type-meal {
+            background: #FFFCF5;
+            border: 1px solid #FDE68A;
+            box-shadow: 0 4px 6px rgba(251, 191, 36, 0.05);
+        }
+
+        /* Type 3: SHOP (Soft Lavender) */
+        .type-shop {
+            background: #FBF7FF;
+            border: 1px solid #E9D5FF;
+        }
+
+        /* Type 4: TRANSPORT STRIP */
+        .transport-strip {
+            background: transparent;
+            color: #4B5563;
+            padding: 10px 0;
+            font-size: 14px;
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            margin-left: 24px;
+            border-left: 2px dashed #CBD5E1;
+            padding-left: 24px;
+            min-height: 50px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .transport-strip::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            top: 16px;
+            width: 10px;
+            height: 10px;
+            background: #CBD5E1;
+            border-radius: 50%;
+        }
+
+        .transport-strip i {
+            width: 24px;
+            text-align: center;
+            color: #9CA3AF;
+            margin-top: 3px;
+            font-size: 16px;
+        }
+
+        /* XP Transport (Highlights) */
+        .transport-xp i {
+            color: #4F46E5;
+        }
+
+        .transport-xp strong {
+            color: #312E81;
+        }
+
+        .transport-xp::before {
+            background: #6366F1;
+        }
+
+        .transport-xp {
+            border-left-style: solid;
+            border-left-color: #E0E7FF;
+            background: linear-gradient(to right, #EEF2FF, transparent);
+            border-radius: 6px;
+        }
+
+        /* DUAL OPTION BOX */
+        .transport-dual {
+            margin-left: 48px;
+            background: #F3F4F6;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            border: 1px solid #E5E7EB;
+        }
+
+        .timeline-container {
+            position: relative;
+            padding-bottom: 60px;
+        }
+
+        /* Interactive Elements */
+        .icon-check {
+            cursor: pointer;
+            color: #E5E7EB;
+            font-size: 22px;
+            position: absolute;
+            right: 24px;
+            top: 24px;
+            transition: color 0.2s;
+        }
+
+        .icon-check.checked {
+            color: #10B981;
+        }
+
+        [contenteditable="true"]:focus {
+            outline: 2px dashed #C5A059;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2px;
+            border-radius: 4px;
+        }
+
+        /* Tags */
+        .tag-time {
+            font-family: 'Outfit';
+            font-weight: 700;
+            font-size: 15px;
+            color: #111827;
+            display: inline-block;
+            margin-bottom: 4px;
+        }
+
+        .tag-duration {
+            font-size: 11px;
+            background: #F3F4F6;
+            color: #6B7280;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-left: 8px;
+            font-weight: 500;
+        }
+
+        .tag-warn {
+            display: inline-block;
+            background: #FEF2F2;
+            color: #DC2626;
+            border: 1px solid #FECACA;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-top: 6px;
+        }
+
+        .tag-tip {
+            display: inline-block;
+            background: #EFF6FF;
+            color: #1D4ED8;
+            border: 1px solid #BFDBFE;
+            font-weight: 500;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-top: 6px;
+            margin-right: 4px;
+        }
+
+        h3 {
+            font-family: "Noto Serif SC", serif;
+            font-weight: 700;
+            color: #111827;
+            letter-spacing: 0.02em;
+        }
+
+        .section-header {
+            position: sticky;
+            top: 70px;
+            z-index: 40;
+            background: rgba(248, 249, 250, 0.95);
+            backdrop-filter: blur(8px);
+            padding: 16px 0;
+            border-bottom: 1px solid #E5E7EB;
+            margin-bottom: 24px;
+        }
+
+        /* RETURN CARD */
+        .return-card {
+            background: white;
+            border: 2px solid #E5E7EB;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+            color: #1F2937;
+        }
+    </style>
+    <script>
+        function toggle(el) {
+            el.classList.toggle('checked');
+            if (el.classList.contains('checked')) {
+                el.classList.replace('fa-circle', 'fa-circle-check');
+                el.classList.add('fa-solid'); el.classList.remove('fa-regular');
+            } else {
+                el.classList.replace('fa-circle-check', 'fa-circle');
+                el.classList.add('fa-regular'); el.classList.remove('fa-solid');
+            }
+        }
+    </script>
+</head>
+
+<body class="font-sans antialiased">
+    <header class="bg-mag-navy text-white pt-16 pb-24 text-center px-4 relative overflow-hidden">
+        <div class="absolute top-0 right-0 opacity-10 text-9xl text-red-500 font-serif"
+            style="transform: rotate(15deg); top: -20px; right: -20px;">春</div>
+
+        <p class="font-serif italic text-mag-gold text-lg mb-2">2026.02.18 — 02.23 (农历大年初一后)</p>
+        <h1 class="font-serif text-4xl font-bold tracking-wider mb-2">粤港澳 · 极致漫游</h1>
+        <p class="text-xs text-gray-400 mt-2">✨ 2026金马贺岁特别版</p>
+
+        <div class="mt-8 bg-white/10 backdrop-blur rounded-lg p-4 text-left max-w-sm mx-auto border border-white/20">
+            <h4 class="font-bold text-mag-gold text-sm mb-1"><i class="fa-solid fa-credit-card mr-2"></i>出行必备: 八达通
+                (Octopus)</h4>
+            <p class="text-xs text-gray-300 leading-relaxed">
+                建议每人买一张八达通 (押金HK$50可退)。<br>
+                1. <strong>畅行无阻</strong>：巴士、地铁 (MTR)、天星小轮、叮叮车全通用。<br>
+                2. <strong>使用方便</strong>：便利店 (7-11) 也能用，无需备零钱。
+            </p>
+        </div>
+    </header>
+
+    <div
+        class="sticky top-0 z-50 bg-white shadow-sm overflow-x-auto hide-scrollbar -mt-6 rounded-t-3xl border-b border-gray-100">
+        <div class="flex justify-start md:justify-center p-4 gap-3 min-w-max px-4">
+            <a href="#d1"
+                class="px-4 py-2 text-xs font-bold bg-white border border-gray-200 rounded-full hover:bg-gray-50 text-gray-700 shadow-sm">D1
+                广州</a>
+            <a href="#d2"
+                class="px-4 py-2 text-xs font-bold bg-white border border-gray-200 rounded-full hover:bg-gray-50 text-gray-700 shadow-sm">D2
+                长隆</a>
+            <a href="#d3"
+                class="px-4 py-2 text-xs font-bold bg-white border border-gray-200 rounded-full hover:bg-gray-50 text-gray-700 shadow-sm">D3
+                澳门</a>
+            <a href="#d4"
+                class="px-4 py-2 text-xs font-bold bg-white border border-gray-200 rounded-full hover:bg-gray-50 text-gray-700 shadow-sm">D4
+                香港</a>
+            <a href="#d5"
+                class="px-4 py-2 text-xs font-bold bg-white border border-gray-200 rounded-full hover:bg-gray-50 text-gray-700 shadow-sm">D5
+                赛马</a>
+            <a href="#d6"
+                class="px-4 py-2 text-xs font-bold bg-white border border-gray-200 rounded-full hover:bg-gray-50 text-gray-700 shadow-sm">D6
+                终章</a>
+        </div>
+    </div>
+
+    <main class="max-w-xl mx-auto px-4 pb-20">
+
+        <!-- ======================= DAY 1 ======================= -->
+        <section id="d1" class="timeline-container">
+            <div class="section-header">
+                <h2 class="font-serif text-2xl font-bold text-mag-navy flex items-center justify-between">
+                    <span>02.18 周三 | 抵达广州</span>
+                    <span
+                        class="text-xs font-sans font-normal text-red-600 bg-red-50 px-2 py-1 rounded border border-red-100">大年初二</span>
+                </h2>
+            </div>
+
+            <div class="transport-strip !border-0 !ml-0 pl-0">
+                <i class="fa-solid fa-plane text-mag-gold"></i>
+                <span class="font-bold text-gray-800" contenteditable="true">10:40 抵达白云机场 (T1/T2)</span>
+            </div>
+
+            <div class="transport-strip">
+                <i class="fa-solid fa-route"></i>
+                <div class="w-full">
+                    <strong class="text-gray-700">前往酒店: 华厦大酒店</strong>
+                </div>
+            </div>
+            <div class="transport-dual">
+                <div class="flex justify-between items-start border-b border-gray-200 pb-2 mb-2">
+                    <div>
+                        <strong class="text-gray-700"><i class="fa-solid fa-taxi mr-1"></i> 方案A: 打车 (舒适)</strong>
+                        <div class="text-xs text-gray-500 mt-1">机场T1/T2乘车点 -> 海珠广场。<br>约 60分钟 | 费用 ¥100-120</div>
+                    </div>
+                </div>
+                <div>
+                    <strong class="text-gray-700"><i class="fa-solid fa-train mr-1"></i> 方案B: 地铁 (经济)</strong>
+                    <div class="text-xs text-gray-500 mt-1">
+                        [3号线北延段] 机场南 -> 嘉禾望岗 (换2号线) -> 海珠广场 F口。<br>
+                        约 70分钟 | 费用 ¥8
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-base type-visit">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">12:00</span>
+                    <span class="tag-duration">办理入住</span>
+                </div>
+                <h3 class="text-xl mb-1" contenteditable="true">华厦大酒店</h3>
+                <p class="text-sm text-gray-600 mt-1" contenteditable="true">海珠广场正中央，交通枢纽。</p>
+            </div>
+
+            <div class="transport-strip">
+                <i class="fa-solid fa-person-walking"></i>
+                <div class="w-full" contenteditable="true"><strong>步行 (5-10分钟)</strong>前往餐厅。</div>
+            </div>
+
+            <div class="card-base type-meal">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">12:30</span>
+                </div>
+                <h3 class="text-xl mb-1" contenteditable="true">陶陶居 / 点都德</h3>
+                <div class="tag-warn" contenteditable="true">⚠️ 春节排队30min+</div>
+            </div>
+
+            <div class="transport-strip">
+                <i class="fa-solid fa-train"></i>
+                <div class="w-full" contenteditable="true">
+                    <strong>地铁 6号线</strong><br>
+                    <span class="text-xs text-gray-500">
+                        一德路站 上车 -> 文化公园站 下车 (往浔峰岗方向, 1站) -> D口出 -> 步行5分钟。
+                    </span>
+                </div>
+            </div>
+
+            <div class="card-base type-visit">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">14:00 - 15:00</span>
+                    <span class="tag-warn">必去</span>
+                </div>
+                <h3 class="text-xl mb-1" contenteditable="true">十三行博物馆</h3>
+                <p class="text-sm text-gray-600 mb-1" contenteditable="true">看点: 清代外销画、广彩瓷器、象牙扇。</p>
+                <div class="tag-warn" contenteditable="true">⛔ 16:00 停止入馆</div>
+            </div>
+
+            <div class="transport-strip">
+                <i class="fa-solid fa-taxi"></i>
+                <div class="w-full" contenteditable="true"><strong>打车前往</strong> (约20分钟 ¥25)。</div>
+            </div>
+
+            <div class="card-base type-visit">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">15:30 - 16:15</span>
+                </div>
+                <h3 class="text-xl mb-1" contenteditable="true">陈家祠 (陈氏书院)</h3>
+                <p class="text-sm text-gray-600 mb-1" contenteditable="true">看点: 岭南建筑装饰顶峰 (木雕/石雕/砖雕)。</p>
+                <div class="tag-tip" contenteditable="true">需公号预约 ¥10</div>
+            </div>
+
+            <div class="transport-strip"><i class="fa-solid fa-taxi"></i>
+                <div class="w-full" contenteditable="true"><strong>打车/地铁</strong> 至纪念堂。</div>
+            </div>
+            <div class="card-base type-visit">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">16:45</span>
+                </div>
+                <h3 class="text-xl mb-1" contenteditable="true">中山纪念堂 (外观)</h3>
+                <p class="text-sm text-gray-600" contenteditable="true">欣赏经典八角形建筑。</p>
+            </div>
+
+            <div class="transport-strip">
+                <i class="fa-solid fa-taxi"></i>
+                <div class="w-full" contenteditable="true"><strong>打车</strong> 至沙面。</div>
+            </div>
+
+            <div class="card-base type-visit">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">17:30 - 18:30</span>
+                </div>
+                <h3 class="text-xl mb-1" contenteditable="true">沙面岛 & 江景</h3>
+                <p class="text-sm text-gray-600" contenteditable="true">欧式建筑群，适合拍照。</p>
+            </div>
+
+            <div class="transport-strip">
+                <i class="fa-solid fa-person-walking"></i>
+                <div class="w-full" contenteditable="true"><strong>步行前往 (1.2km)</strong> 沿江步行约18分钟至永庆坊。</div>
+            </div>
+
+            <div class="card-base type-visit">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">19:30</span>
+                    <span class="tag-duration">重点</span>
+                </div>
+                <h3 class="text-xl mb-1" contenteditable="true">永庆坊 · 广福台</h3>
+                <div class="tag-tip" contenteditable="true">粤剧名伶表演 (19:30开始 免费)</div>
+            </div>
+
+            <div class="card-base type-meal">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">20:15</span>
+                </div>
+                <h3 class="text-xl mb-1" contenteditable="true">西关美食 (晚餐)</h3>
+            </div>
+        </section>
+
+        <!-- ======================= DAY 2 ======================= -->
+        <section id="d2" class="timeline-container">
+            <div class="section-header">
+                <h2 class="font-serif text-2xl font-bold text-mag-navy">02.19 周四 | 长隆 & 广州塔</h2>
+            </div>
+
+            <div class="transport-strip">
+                <i class="fa-solid fa-taxi"></i>
+                <div class="w-full" contenteditable="true">
+                    <strong>打车前往 (推荐)</strong>
+                    <div class="text-xs text-gray-500">打车直达长隆北门 (¥60-70)。地铁需换乘较拥挤。</div>
+                </div>
+            </div>
+
+            <div class="card-base type-visit">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">09:30 - 17:00</span>
+                </div>
+                <h3 class="text-xl mb-1" contenteditable="true">长隆野生动物世界</h3>
+                <p class="text-sm text-gray-600 mb-1" contenteditable="true">路线: 北门小火车 -> 步行区(熊猫/考拉/白虎) -> 南门出。</p>
+                <div class="tag-warn" contenteditable="true">⚠️ 熊猫上午09:30-11:00最活跃</div>
+            </div>
+
+            <div class="transport-strip">
+                <i class="fa-solid fa-taxi"></i>
+                <div class="w-full" contenteditable="true">
+                    <strong>打车 (首选)</strong>
+                    <div class="text-xs text-gray-500">返回市区珠江新城。约35分钟 (¥70)。</div>
+                </div>
+            </div>
+
+            <div class="card-base type-visit">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">18:00</span>
+                </div>
+                <h3 class="text-xl mb-1" contenteditable="true">海心沙 & 广州塔 (外观)</h3>
+                <p class="text-sm text-gray-600" contenteditable="true">不建议上塔(人多排队)，在海心沙拍全景最佳。</p>
+            </div>
+
+            <div class="transport-strip"><i class="fa-solid fa-person-walking"></i>
+                <div class="w-full" contenteditable="true"><strong>步行</strong> 至炳胜品味 (珠江新城店)。</div>
+            </div>
+
+            <div class="card-base type-meal">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <h3 class="text-xl mb-1" contenteditable="true">炳胜品味 (晚餐)</h3>
+                <div class="tag-tip" contenteditable="true">需提前取号</div>
+            </div>
+        </section>
+
+        <!-- ======================= DAY 3 ======================= -->
+        <section id="d3" class="timeline-container">
+            <div class="section-header">
+                <h2 class="font-serif text-2xl font-bold text-mag-navy">02.20 周五 | 澳门双城</h2>
+            </div>
+
+            <div class="card-base type-meal">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">08:00 - 09:30</span>
+                </div>
+                <h3 class="text-lg font-bold" contenteditable="true">早茶 (华厦大酒店内)</h3>
+            </div>
+
+            <div class="transport-strip"><i class="fa-solid fa-bus"></i>
+                <div class="w-full" contenteditable="true"><strong>10:00 - 12:30 酒店大巴</strong> -> 珠海拱北口岸</div>
+            </div>
+            <div class="transport-strip"><i class="fa-solid fa-person-walking"></i>
+                <div class="w-full" contenteditable="true"><strong>13:00 - 14:00 步行过关</strong> (预留1小时)</div>
+            </div>
+            <div class="transport-strip"><i class="fa-solid fa-bus"></i>
+                <div class="w-full" contenteditable="true"><strong>14:30 入住</strong> "伦敦人" (发财车前往)</div>
+            </div>
+
+            <div class="transport-strip">
+                <i class="fa-solid fa-bus"></i>
+                <div class="w-full" contenteditable="true">
+                    <strong>公共巴士 26A / 21A</strong>
+                    <div class="text-xs text-gray-500 mt-1">
+                        <i class="fa-solid fa-location-dot"></i> <strong>上车:</strong> 连贯公路/伦敦人 <br>
+                        <i class="fa-solid fa-arrow-right"></i> <strong>方向:</strong> 筷子基北湾 / 妈阁 (往半岛方向)<br>
+                        <i class="fa-solid fa-location-dot"></i> <strong>下车:</strong> 新马路/永亨 (MOP 6，备零钱)
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-base type-visit">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">15:00 - 17:30</span>
+                </div>
+                <h3 class="text-xl mb-1" contenteditable="true">大三巴牌坊 (Ruins of St. Paul's)</h3>
+                <p class="text-sm text-gray-600" contenteditable="true">澳门地标。</p>
+                <div class="tag-tip" contenteditable="true">永利: 整点看发财树表演</div>
+            </div>
+
+            <div class="transport-strip"><i class="fa-solid fa-bus"></i>
+                <div class="w-full" contenteditable="true"><strong>永利穿梭巴士</strong> -> 永利皇宫。</div>
+            </div>
+
+            <div class="card-base type-visit">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <h3 class="text-xl mb-1" contenteditable="true">威尼斯人 (贡多拉) & 永利皇宫</h3>
+                <p class="text-sm text-gray-600" contenteditable="true">
+                    1. <strong>贡多拉 (Gondola)</strong> 体验大运河风情。<br>
+                    2. <strong>免费缆车 (SkyCab)</strong>: 永利皇宫免费体验 (推荐日落/夜景)。
+                </p>
+                <div class="tag-tip" contenteditable="true">贡多拉需买票</div>
+            </div>
+
+            <div class="card-base type-meal">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">17:45</span>
+                </div>
+                <h3 class="text-xl mb-1" contenteditable="true">晚餐: 汉普阁</h3>
+                <div class="tag-tip" contenteditable="true">已预订</div>
+            </div>
+
+            <div class="card-base type-visit">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">20:00</span>
+                </div>
+                <h3 class="text-xl mb-1" contenteditable="true">澳门夜景</h3>
+                <p class="text-sm text-gray-600" contenteditable="true">伦敦人水晶金殿 / 外立面。</p>
+            </div>
+        </section>
+
+        <!-- ======================= DAY 4 ======================= -->
+        <section id="d4" class="timeline-container">
+            <div class="section-header">
+                <h2 class="font-serif text-2xl font-bold text-mag-navy">02.21 周六 | 进军香港</h2>
+            </div>
+
+            <div class="card-base bg-gray-50 p-4 rounded-lg mb-6 border border-gray-100">
+                <h4 class="font-bold text-gray-800 mb-2"><i class="fa-solid fa-compass mr-2"></i>跨境: 澳门 - 香港湾仔</h4>
+                <div class="transport-strip !ml-0 !border-0 pl-0">
+                    <i class="fa-solid fa-bus"></i>
+                    <div class="w-full" contenteditable="true">
+                        <strong>3. 城巴 A11 (11:00 - 12:30)</strong>
+                        <div class="text-xs text-gray-500 mt-1">
+                            <i class="fa-solid fa-location-dot"></i> <strong>上车:</strong> 香港口岸巴士总站<br>
+                            <i class="fa-solid fa-arrow-right"></i> <strong>方向:</strong> 北角码头 (North Point)<br>
+                            <i class="fa-regular fa-circle-down"></i> <strong>下车:</strong> 菲林明道, 轩尼诗道 (Fleming Rd)
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="transport-strip"><i class="fa-solid fa-building"></i>
+                <div class="w-full" contenteditable="true"><strong>13:30 办理入住</strong> 香港君悦酒店。</div>
+            </div>
+
+            <div class="card-base type-visit">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">14:30 - 17:00</span>
+                </div>
+                <h3 class="text-xl mb-2" contenteditable="true">湾仔 Citywalk (顺路动线)</h3>
+                <ul class="text-sm text-gray-600 space-y-2" contenteditable="true">
+                    <li><strong class="text-mag-navy text-xs">NO.1 海滨区 & 避风塘:</strong></li>
+                    <li>• <strong>湾仔码头 (Wan Chai Pier)</strong> -> <strong>金紫荆广场</strong></li>
+                    <li>• <strong>铜锣湾避风塘 (Typhoon Shelter)</strong> <br><span
+                            class="text-xs text-gray-400 pl-4">(沿海滨长廊步行/骑行体验)</span></li>
+                    <li><i class="fa-solid fa-arrow-down text-gray-300 mx-2"></i> <span
+                            class="text-xs text-gray-400">返回/前往街区</span></li>
+                    <li><strong class="text-mag-navy text-xs">NO.2 街区:</strong></li>
+                    <li>• <strong>旧湾仔邮政局 (Old Wan Chai Post Office)</strong> (皇后大道东)</li>
+                    <li>• <strong>蓝屋建筑群</strong> (石水渠街/Stone Nullah Ln)</li>
+                    <li>• <strong>香港文学馆</strong> (茂萝街 M7)</li>
+                    <li>• <strong>利东街 (Lee Tung Ave)</strong> & 和昌大押</li>
+                </ul>
+            </div>
+
+            <div class="transport-strip"><i class="fa-solid fa-person-walking"></i>
+                <div class="w-full" contenteditable="true"><strong>步行</strong> 至甘牌烧鹅 (5分钟)。</div>
+            </div>
+
+            <div class="card-base type-meal">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">17:30</span>
+                </div>
+                <h3 class="text-xl mb-1" contenteditable="true">晚餐: 甘牌 / 再兴</h3>
+                <div class="tag-warn" contenteditable="true">需排队1小时+</div>
+            </div>
+
+            <!-- XP Transport -->
+            <div class="transport-strip transport-xp">
+                <i class="fa-solid fa-bus"></i>
+                <div class="w-full" contenteditable="true">
+                    <strong>19:00 - 15路双层巴士 (上山)</strong>
+                    <div class="text-xs text-indigo-800 mt-1">
+                        <i class="fa-solid fa-location-dot"></i> <strong>上车:</strong> 中环交易广场总站 (Exchange Square)<br>
+                        <i class="fa-solid fa-arrow-right"></i> <strong>方向:</strong> 山顶 (The Peak)<br>
+                        ⭐ <strong>请坐上层左侧</strong> (看悬空海景)。
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-base type-visit">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">19:30 - 21:00</span>
+                </div>
+                <h3 class="text-xl mb-1" contenteditable="true">太平山顶 (夜景)</h3>
+                <p class="text-sm text-gray-600" contenteditable="true">狮子亭 ->
+                    卢吉道(步行16分至全景位)。<br><strong>不要去摩天台(人多收费)。</strong></p>
+            </div>
+
+            <div class="transport-strip transport-xp">
+                <i class="fa-solid fa-train"></i>
+                <div class="w-full" contenteditable="true">
+                    <strong>山顶缆车 (下山)</strong>
+                    <div class="text-xs text-indigo-800">
+                        <strong>下车:</strong> 花园道总站 (Garden Rd)。<br>
+                        ⭐ <strong>坐面向山顶的左侧</strong>。
+                    </div>
+                </div>
+            </div>
+
+            <div class="transport-strip transport-xp">
+                <i class="fa-solid fa-train-tram"></i>
+                <div class="w-full" contenteditable="true">
+                    <strong>叮叮车 (Tram)</strong>
+                    <div class="text-xs text-indigo-800">
+                        <i class="fa-solid fa-location-dot"></i> <strong>上车:</strong> 美利道 (Murray Rd) <br>
+                        <i class="fa-solid fa-arrow-right"></i> <strong>方向:</strong> 铜锣湾 / 北角 / 筲箕湾<br>
+                        <i class="fa-regular fa-circle-down"></i> <strong>下车:</strong> 百德新街 (Paterson St)
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-base type-shop">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">21:30</span>
+                </div>
+                <h3 class="text-xl mb-2" contenteditable="true">铜锣湾 Citywalk (购物)</h3>
+                <ul class="text-sm text-gray-600 space-y-1" contenteditable="true">
+                    <li>1. <strong>SOGO 崇光百货</strong> (老牌百货) - <em>22:00关门</em></li>
+                    <li>2. <strong>白沙道 (Pak Sha Rd)</strong> - 潮流买手店</li>
+                    <li>3. <strong>皇室堡 (Windsor House)</strong> - <strong>MUJI 无印良品</strong></li>
+                    <li>4. <strong>Don Don Donki</strong> (24h 珍珠城店)</li>
+                </ul>
+            </div>
+
+            <div class="transport-strip">
+                <i class="fa-solid fa-taxi"></i>
+                <div class="w-full" contenteditable="true"><strong>打车回酒店</strong> (HK$40)。</div>
+            </div>
+        </section>
+
+        <!-- ======================= DAY 5 ======================= -->
+        <section id="d5" class="timeline-container">
+            <div class="section-header">
+                <h2 class="font-serif text-2xl font-bold text-mag-navy">02.22 周日 | 赛马 & 文化</h2>
+            </div>
+
+            <div class="transport-strip"><i class="fa-solid fa-taxi"></i>
+                <div class="w-full" contenteditable="true"><strong>08:30 打车</strong> 至中环天星码头。</div>
+            </div>
+
+            <div class="transport-strip transport-xp">
+                <i class="fa-solid fa-ship"></i>
+                <div class="w-full">
+                    <strong class="text-indigo-900" contenteditable="true">天星小轮 (Star Ferry)</strong>
+                    <div class="text-xs text-indigo-800">
+                        <i class="fa-solid fa-location-dot"></i> <strong>上船:</strong> 中环7号码头 (Central Pier 7)<br>
+                        <i class="fa-solid fa-arrow-right"></i> <strong>方向:</strong> 尖沙咀 (Tsim Sha Tsui)<br>
+                        刷八达通直接入闸。
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-base type-visit">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <h3 class="text-xl mb-2" contenteditable="true">尖沙咀晨间漫步</h3>
+                <p class="text-sm text-gray-600">
+                    1. <strong>钟楼 (Clock Tower)</strong>: 百年地标。<br>
+                    2. <strong>香港艺术馆 (外观)</strong>: 独特建筑风格。<br>
+                    3. <strong>星光大道</strong>: 寻找李小龙/梅艳芳/麦兜铜像。<br>
+                    4. <strong>K11 MUSEA</strong>: 欣赏外观及金像奖女神。
+                </p>
+            </div>
+
+            <div class="transport-strip">
+                <i class="fa-solid fa-bus"></i>
+                <div class="w-full" contenteditable="true">
+                    <strong>公交 (Bus)</strong>
+                    <div class="text-xs text-gray-500">
+                        <i class="fa-solid fa-location-dot"></i> <strong>上车:</strong> 尖沙咀码头总站<br>
+                        <i class="fa-solid fa-arrow-right"></i> <strong>方向:</strong> 往佐敦/旺角方向 (路线 1/1A/2/6/9)<br>
+                        <i class="fa-regular fa-circle-down"></i> <strong>下车:</strong> 佐敦站 / 白加士街
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-base type-meal">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">11:00</span>
+                </div>
+                <h3 class="text-xl mb-1" contenteditable="true">澳洲牛奶公司 (午餐)</h3>
+                <div class="tag-warn" contenteditable="true">💵 只收现金 Cash Only</div>
+            </div>
+
+            <div class="transport-strip">
+                <i class="fa-solid fa-route"></i>
+                <div class="w-full"><strong>前往: 沙田马场</strong></div>
+            </div>
+
+            <div class="transport-dual">
+                <div class="flex justify-between items-start border-b border-gray-200 pb-2 mb-2">
+                    <div>
+                        <strong class="text-gray-700"><i class="fa-solid fa-taxi mr-1"></i> 打车 (最快)</strong>
+                        <div class="text-xs text-gray-500 mt-1">25分钟 | HK$140-160 | 避免换乘</div>
+                    </div>
+                </div>
+                <div>
+                    <strong class="text-gray-700"><i class="fa-solid fa-train mr-1"></i> 地铁 (体验)</strong>
+                    <div class="text-xs text-gray-500 mt-1">
+                        体验东铁线。佐敦->马场需3次换乘，约50分钟。
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-base type-visit">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">12:00 - 16:00</span>
+                    <span class="tag-warn">赛事日</span>
+                </div>
+                <h3 class="text-xl mb-1" contenteditable="true">沙田马场</h3>
+                <p class="text-sm text-gray-600 mt-1" contenteditable="true">12:45开赛。感受港式赛马文化。<strong>可领小马礼品</strong>。
+                </p>
+                <div class="tag-warn" contenteditable="true">🛂 必须带护照入场</div>
+            </div>
+
+            <div class="transport-strip"><i class="fa-solid fa-taxi"></i>
+                <div class="w-full" contenteditable="true"><strong>打车</strong> 至文化博物馆 (HK$35)。</div>
+            </div>
+
+            <div class="card-base type-visit">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">16:30 - 18:00</span>
+                </div>
+                <h3 class="text-xl mb-1" contenteditable="true">香港文化博物馆</h3>
+                <p class="text-sm text-gray-600 mt-1" contenteditable="true">必看: 金庸馆 (查良镛博士展厅) / 李小龙展览。</p>
+                <div class="tag-warn" contenteditable="true">18:00 闭馆</div>
+            </div>
+
+            <div class="transport-strip">
+                <i class="fa-solid fa-train"></i>
+                <div class="w-full" contenteditable="true">
+                    <strong>地铁 (MTR)</strong>
+                    <div class="text-xs text-gray-500">
+                        车公庙站 [屯马线] -> 钻石山 (换[观塘线]往黄埔) -> 油麻地 C口。
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-base type-visit">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">19:00 - 19:30</span>
+                    <span class="tag-tip">需预约</span>
+                </div>
+                <h3 class="text-xl mb-1" contenteditable="true">油麻地警署</h3>
+                <p class="text-sm text-gray-600 mt-1" contenteditable="true">TVB经典。参加"时光之旅"体验。</p>
+            </div>
+
+            <div class="transport-strip"><i class="fa-solid fa-person-walking"></i>
+                <div class="w-full" contenteditable="true"><strong>步行</strong> 至庙街 (2分钟)。</div>
+            </div>
+
+            <div class="card-base type-visit">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <h3 class="text-xl mb-1" contenteditable="true">百老汇电影中心 & Kubrick</h3>
+                <p class="text-sm text-gray-600" contenteditable="true">文艺青年打卡地。书店/海报。</p>
+            </div>
+
+            <div class="card-base type-visit">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <h3 class="text-xl mb-1" contenteditable="true">庙街夜市 (Temple St)</h3>
+                <p class="text-sm text-gray-600" contenteditable="true">感受平民夜市氛围，霓虹灯牌。</p>
+            </div>
+
+            <div class="card-base type-meal">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">19:30 - 20:30</span>
+                </div>
+                <h3 class="text-xl mb-1" contenteditable="true">兴记煲仔饭</h3>
+                <div class="tag-warn" contenteditable="true">💵 只收现金</div>
+            </div>
+
+            <div class="transport-strip"><i class="fa-solid fa-train"></i>
+                <div class="w-full" contenteditable="true"><strong>地铁</strong> 油麻地 -> 中环</div>
+            </div>
+
+            <div class="card-base type-visit">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">21:00 前到达</span>
+                </div>
+                <h3 class="text-xl mb-1" contenteditable="true">中环摩天轮 & 兰桂坊</h3>
+                <p class="text-sm text-gray-600" contenteditable="true">
+                    1. <strong>摩天轮</strong> (21:00截止)。<br>
+                    2. <strong>兰桂坊 (LKF)</strong>: 步行10分钟可达，感受夜生活氛围。
+                </p>
+                <div class="tag-warn" contenteditable="true">⛔ 21:00 截止入场</div>
+            </div>
+        </section>
+
+        <!-- ======================= DAY 6 ======================= -->
+        <section id="d6" class="timeline-container">
+            <div class="section-header">
+                <h2 class="font-serif text-2xl font-bold text-mag-navy">02.23 周一 | 终章 & 返程</h2>
+            </div>
+
+            <div class="transport-strip"><i class="fa-solid fa-taxi"></i>
+                <div class="w-full" contenteditable="true"><strong>08:30 打车</strong> 寄存行李。</div>
+            </div>
+
+            <div class="card-base type-visit">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">08:30 - 11:30</span>
+                </div>
+                <h3 class="text-xl mb-2" contenteditable="true">中环 Citywalk (顺路动线)</h3>
+                <ul class="text-sm text-gray-600 space-y-2" contenteditable="true">
+                    <li><strong class="text-mag-navy text-xs">起点:</strong> <strong>中环街市</strong> -> <strong>半山扶梯
+                            (至荷李活道)</strong></li>
+                    <li><i class="fa-solid fa-arrow-right text-gray-300 mx-2"></i> <strong>大馆 (Tai Kwun)</strong></li>
+                    <li><i class="fa-solid fa-arrow-right text-gray-300 mx-2"></i> <strong>荷李活道</strong> (文武庙) ->
+                        <strong>摩罗上街 (古董街)</strong></li>
+                    <li><i class="fa-solid fa-arrow-turn-down text-gray-300 mx-2"></i> <span
+                            class="text-xs text-gray-400">折返/步行至威灵顿街</span></li>
+                    <li><i class="fa-solid fa-arrow-right text-gray-300 mx-2"></i> <strong>艺穗会 (Fringe Club)</strong>
+                        (经典红白砖建筑)</li>
+                    <li><strong class="text-mag-navy text-xs">下半场:</strong> <strong>嘉咸街壁画</strong> ->
+                        <strong>石板街</strong></li>
+                    <li><i class="fa-solid fa-arrow-right text-gray-300 mx-2"></i> <strong>都爹利街 (煤气灯)</strong></li>
+                    <li>🛍️ 手信: <strong>八珍酱园</strong></li>
+                </ul>
+            </div>
+
+            <div class="card-base type-meal">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">12:00</span>
+                </div>
+                <h3 class="text-xl mb-1" contenteditable="true">午餐: 九记 / 麦奀记</h3>
+                <div class="tag-warn" contenteditable="true">💵 Casn Only</div>
+            </div>
+
+            <!-- UPGRADED STAR FERRY STYLE -->
+            <div class="transport-strip transport-xp">
+                <i class="fa-solid fa-ship"></i>
+                <div class="w-full" contenteditable="true">
+                    <strong class="text-indigo-900">天星小轮 (Star Ferry)</strong>
+                    <div class="text-xs text-indigo-800">
+                        <strong>中环7号码头 -> 尖沙咀码头</strong> (下层较稳，上层景好)。<br>
+                        到达后步行即可至海港城。
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-base type-visit">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">13:00</span>
+                </div>
+                <h3 class="text-xl mb-2" contenteditable="true">尖沙咀补遗</h3>
+                <ul class="text-sm text-gray-600 space-y-2" contenteditable="true">
+                    <li>• <strong>重庆大厦</strong> (Chungking Mansions): 门口看一眼，感受赛博朋克风。</li>
+                    <li>• <strong>海港城</strong> (Harbour City): 香港最大商场，逛街补货。</li>
+                    <li>• <strong>九龙公园</strong>: 城市绿洲，看火烈鸟。</li>
+                    <li>• <strong>香港文物探知馆</strong>: 公园内历史建筑。</li>
+                </ul>
+            </div>
+
+            <div class="transport-strip">
+                <i class="fa-solid fa-taxi"></i>
+                <div class="w-full" contenteditable="true">
+                    <strong>打车/步行</strong> 至西九龙。
+                </div>
+            </div>
+
+            <div class="card-base type-visit">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">14:30 - 16:00</span>
+                </div>
+                <h3 class="text-xl mb-2" contenteditable="true">西九龙文化区 (M+)</h3>
+                <p class="text-sm text-gray-600" contenteditable="true">
+                    亚洲首家全球性当代视觉文化博物馆。<br>
+                    看点: <strong>M+外观建筑</strong>, <strong>海滨长廊漫步</strong>, <strong>艺术公园</strong>。<br>
+                    <span class="text-xs text-gray-400">(注: 周一闭馆, 仅参观外观与周边)</span>
+                </p>
+            </div>
+
+            <div class="return-card rounded-xl p-6 mt-8 mb-8">
+                <h3 class="font-bold text-xl mb-4 text-mag-navy"><i class="fa-solid fa-plane-departure mr-2"></i>返程路线
+                    (20:40 航班)</h3>
+
+                <div class="space-y-4 text-sm text-gray-800">
+                    <div class="flex gap-3">
+                        <span class="font-bold text-mag-gold min-w-[60px]">17:00</span>
+                        <div>
+                            <p class="font-bold">香港西九龙站 -> 深圳北站</p>
+                            <p class="text-xs text-gray-500">高铁 (High Speed Rail), 约20分钟。需预留时间过关。</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="font-bold text-mag-gold min-w-[60px]">18:00</span>
+                        <div>
+                            <p class="font-bold">深圳北 -> 深圳宝安机场 T3</p>
+                            <p class="text-xs text-gray-500">打车 (约45分钟 ¥100) 或 地铁 (5号线/11号线 约60分钟)。建议打车。</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="font-bold text-mag-gold min-w-[60px]">19:00</span>
+                        <div>
+                            <p class="font-bold">抵达机场办理值机</p>
+                            <p class="text-xs text-gray-500">航班 ZHxxxx (20:40 起飞) -> 无锡。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+</body>
+
+</html>
