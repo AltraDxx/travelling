@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>广州 & 香港寻味地图 • GBA Food Map</title>
+
+    <!-- External Libraries -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700;900&family=Outfit:wght@400;500;700&display=swap"
+        rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'mag-gold': '#C5A059',
+                        'mag-navy': '#1A233A',
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        serif: ['Noto Serif SC', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Custom Popup Style - Pro Max */
+        .leaflet-popup-content-wrapper {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.15);
+            padding: 0;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .leaflet-popup-content {
+            margin: 0 !important;
+            width: 280px !important;
+        }
+
+        .leaflet-popup-tip {
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .leaflet-container a.leaflet-popup-close-button {
+            color: #999;
+            font-size: 18px;
+            padding: 8px;
+            width: 30px;
+            height: 30px;
+            margin: 4px;
+            z-index: 10;
+        }
+
+        /* Marker Pulse */
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(197, 160, 89, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(197, 160, 89, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(197, 160, 89, 0);
+            }
+        }
+
+        .marker-pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* Drawer Transitions */
+        #drawerPanel {
+            transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+    </style>
+</head>
+
+<body class="h-[100dvh] w-full overflow-hidden bg-slate-50 relative flex flex-col font-sans text-slate-800">
+
+    <!-- City Switcher (Floating Top) -->
+    <div
+        class="absolute top-6 left-1/2 transform -translate-x-1/2 z-[50] flex bg-white/80 backdrop-blur-md rounded-full p-1 shadow-lg ring-1 ring-black/5">
+        <button onclick="switchCity('gz')" id="btn-gz"
+            class="px-6 py-2 rounded-full text-sm font-bold transition-all text-white bg-mag-navy shadow-md">广州</button>
+        <button onclick="switchCity('hk')" id="btn-hk"
+            class="px-6 py-2 rounded-full text-sm font-bold transition-all text-gray-500 hover:text-mag-navy">香港</button>
+    </div>
+
+    <!-- Map Container -->
+    <div id="map" class="absolute inset-0 z-0"></div>
+
+    <!-- Bottom Drawer Container -->
+    <!-- Height is set to ensure we can show list. We use transform to peek/hide. -->
+    <div id="drawerPanel"
+        class="absolute bottom-0 left-0 right-0 z-30 flex flex-col shadow-[0_-10px_40px_rgba(0,0,0,0.1)] rounded-t-[32px] bg-white/95 backdrop-blur-xl border-t border-white/60 h-[85vh] touch-auto">
+
+        <!-- Drag Handle Area (Larger Hit Area) -->
+        <div id="dragArea"
+            class="w-full h-10 flex items-center justify-center flex-shrink-0 cursor-grab active:cursor-grabbing hover:bg-white/50 transition-colors">
+            <div class="w-12 h-1.5 bg-gray-300 rounded-full mix-blend-multiply"></div>
+        </div>
+
+        <!-- Filter Row (Sticky Header of Drawer) -->
+        <div class="px-5 pb-3 flex-shrink-0 border-b border-gray-100/50">
+            <div id="filterContainer" class="flex gap-2 overflow-x-auto hide-scrollbar pb-1 pointer-events-auto">
+                <!-- Filters injected by JS -->
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="flex-1 relative overflow-hidden bg-slate-50/50">
+
+            <!-- List View (Default) -->
+            <div id="listView" class="absolute inset-0 overflow-y-auto px-5 pb-20 pt-4 space-y-4 touch-pan-y">
+                <!-- List Items injected by JS -->
+            </div>
+
+            <!-- Selected Card View (Hidden until selected) -->
+            <div id="selectedView" class="absolute inset-0 bg-white/50 backdrop-blur-sm px-5 py-4 hidden flex-col">
+                <!-- Single Card injected by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA PLACEHOLDER ---
+        const placemarks = [
+            { name: "对面的糊天甜品", type: "糖水", lat: 23.1315, lng: 113.2455, address: "一品为先食得好对面", note: "", dishes: "", city: "gz" },
+            { name: "兰芳园", type: "糖水", lat: 22.2828, lng: 114.154, address: "西华路第一津", note: "丝袜奶茶始祖", dishes: "丝袜奶茶, 猪扒包", city: "gz" },
+            { name: "沙湾甜品", type: "糖水", lat: 23.1315, lng: 113.2455, address: "西华路第一津", note: "服务态度差", dishes: "招牌的奶制品 姜撞奶双皮奶凤凰炒奶糊，主要服务态度差", city: "gz" },
+            { name: "南信", type: "糖水", lat: 23.1165, lng: 113.2483, address: "广州", note: "", dishes: "比较综合，双皮奶，姜撞奶", city: "gz" },
+            { name: "开记", type: "糖水", lat: 23.1165, lng: 113.2483, address: "上下九路", note: "", dishes: "，绿豆沙、马蹄沙", city: "gz" },
+            { name: "百花甜品", type: "糖水", lat: 23.1256, lng: 113.275, address: "广州", note: "", dishes: "番薯糖水，绿豆沙", city: "gz" },
+            { name: "玫瑰甜品", type: "糖水", lat: 23.1256, lng: 113.2752, address: "广州", note: "", dishes: "凤凰蛋奶糊", city: "gz" },
+            { name: "梁阿珍", type: "糖水", lat: 23.125, lng: 113.275, address: "广州", note: "", dishes: "云吞皮糖水", city: "gz" },
+            { name: "清润坊", type: "糖水", lat: 23.125, lng: 113.275, address: "广州", note: "", dishes: "南洋渣咂和龟苓膏", city: "gz" },
+            { name: "合众肠粉店", type: "肠粉", lat: 23.125, lng: 113.244, address: "龙津路", note: "", dishes: "", city: "gz" },
+            { name: "炜明肠粉店", type: "肠粉", lat: 23.128, lng: 113.248, address: "陈家祠附近", note: "", dishes: "", city: "gz" },
+            { name: "合兴小食店", type: "肠粉", lat: 23.1315, lng: 113.2455, address: "西华路第一津", note: "", dishes: "，濑粉+咸菜，辣可以多放一点", city: "gz" },
+            { name: "德记", type: "肠粉", lat: 23.12, lng: 113.25, address: "广州", note: "", dishes: "", city: "gz" },
+            { name: "源记肠粉", type: "肠粉", lat: 22.2988, lng: 114.1722, address: "华贵路93号", note: "", dishes: "", city: "gz" },
+            { name: "穗银肠粉", type: "肠粉", lat: 23.124, lng: 113.284, address: "大东街道东川路94号之一(近东川新街市", note: "", dishes: "）", city: "gz" },
+            { name: "顺势牛杂汤•30年老字号", type: "下水", lat: 23.133, lng: 113.246, address: "金花街道太保直街与吉祥新街交叉口南80米", note: "", dishes: "牛三星汤", city: "gz" },
+            { name: "一品为先食得好", type: "下水", lat: 23.1315, lng: 113.2455, address: "和安街67号", note: "", dishes: "鸡杂汤+猪杂汤（汤好内脏不腥）", city: "gz" },
+            { name: "西关牛杂", type: "下水", lat: 23.1315, lng: 113.2455, address: "西华路金花直街53号金发食杂店门口", note: "", dishes: "就是牛佬，推荐牛杂+猪肠，牛三星和牛杂汤", city: "gz" },
+            { name: "南信", type: "下水", lat: 23.1165, lng: 113.2483, address: "广州", note: "", dishes: "牛三星加一点腩汁", city: "gz" },
+            { name: "达扬炖品", type: "炖品", lat: 23.1256, lng: 113.275, address: "向前走，德政路，大概500米，有分店，出品一样，位置多", note: "", dishes: "，米其林必比登，除了椰子汤，还有鱼头炖汤等等更本地的汤", city: "gz" },
+            { name: "炳胜品味", type: "家常菜、酒楼", lat: 23.1182, lng: 113.3256, address: "广州", note: "黑珍珠", dishes: "脆皮叉烧, 菠萝包", city: "gz" },
+            { name: "同发号百年老店", type: "家常菜、酒楼", lat: 23.12, lng: 113.25, address: "广州", note: "", dishes: "", city: "gz" },
+            { name: "万年胜记酒楼", type: "家常菜、酒楼", lat: 23.12, lng: 113.25, address: "广州", note: "", dishes: "", city: "gz" },
+            { name: "信记", type: "家常菜、酒楼", lat: 23.113, lng: 113.26, address: "越秀区长提大马路（一德路地铁站A口", note: "", dishes: "），米其林一星", city: "gz" },
+            { name: "森焱食馆", type: "家常菜、酒楼", lat: 23.095, lng: 113.255, address: "海珠区同福西路", note: "", dishes: "，椒盐九肚鱼，下酒菜比较咸", city: "gz" },
+            { name: "广州酒家", type: "家常菜、酒楼", lat: 23.1168, lng: 113.246, address: "广州", note: "老字号", dishes: "文昌鸡, 虾饺", city: "gz" },
+            { name: "梁家菜馆", type: "家常菜、酒楼", lat: 23.12, lng: 113.25, address: "广州", note: "", dishes: "", city: "gz" },
+            { name: "壹厨饭店", type: "家常菜、酒楼", lat: 23.125, lng: 113.278, address: "越秀区德政中路171号", note: "", dishes: "白切鸡", city: "gz" },
+            { name: "醉贤居", type: "家常菜、酒楼", lat: 23.125, lng: 113.278, address: "广州", note: "", dishes: "鸡不错", city: "gz" },
+            { name: "肥姐美食", type: "家常菜、酒楼", lat: 23.095, lng: 113.255, address: "环珠直街43号", note: "", dishes: "桶仔骨，金沙竹肠，葱油吊水鲩鱼，炒通菜和炒老友粉，冰镇黄鳝", city: "gz" },
+            { name: "多福美食馆", type: "家常菜、酒楼", lat: 23.135, lng: 113.28, address: "越秀区司马街八一小学对面", note: "", dishes: "啫啫黄鳝煲和盐焗鹅翅", city: "gz" },
+            { name: "贰少品味", type: "家常菜、酒楼", lat: 23.095, lng: 113.255, address: "同福中路与伍家祠道交叉口西南240米", note: "", dishes: "主要吃水律蛇，但是现在似乎不能吃蛇，但其他菜性价比也可以", city: "gz" },
+            { name: "众源美食", type: "家常菜、酒楼", lat: 23.126, lng: 113.248, address: "光复北路555号", note: "", dishes: "打边炉比较出名", city: "gz" },
+            { name: "同乐居菜馆", type: "家常菜、酒楼", lat: 23.125, lng: 113.255, address: "惠福西路186号", note: "", dishes: "，黄鳝啫啫煲、大肠", city: "gz" },
+            { name: "惠食佳", type: "家常菜、酒楼", lat: 23.107, lng: 113.265, address: "广州", note: "谢霆锋推荐", dishes: "铁板，生姜雪糕", city: "gz" },
+            { name: "白天鹅玉堂春暖", type: "早茶", lat: 23.1075, lng: 113.2386, address: "广州", note: "米其林一星", dishes: "虾饺, 萨其马", city: "gz" },
+            { name: "广州宾馆", type: "早茶", lat: 23.118, lng: 113.263, address: "广州", note: "视野好", dishes: "得云宫早茶", city: "gz" },
+            { name: "宝汉酒家", type: "早茶", lat: 23.126, lng: 113.232, address: "中山八路", note: "", dishes: "", city: "gz" },
+            { name: "荣华楼", type: "早茶", lat: 23.121, lng: 113.243, address: "广州", note: "百年老字号, 有粤剧听", dishes: "虾饺, 凤爪", city: "gz" },
+            { name: "陶然轩", type: "早茶", lat: 23.109, lng: 113.298, address: "广州", note: "二沙岛风景好", dishes: "手工", city: "gz" },
+            { name: "御宝轩", type: "早茶", lat: 23.117, lng: 113.328, address: "广州", note: "米其林二星, 需预约 需要预约", dishes: "需要预约，米二", city: "gz" },
+            { name: "喜势点茶居", type: "早茶", lat: 23.12, lng: 113.26, address: "广州", note: "", dishes: "沙翁", city: "gz" },
+            { name: "新文记", type: "啫啫煲", lat: 22.3032, lng: 114.1856, address: "市二宫地铁站附近", note: "", dishes: "", city: "gz" },
+            { name: "煲笼兴", type: "啫啫煲", lat: 23.105, lng: 113.266, address: "老店", note: "", dishes: "，有点咸", city: "gz" },
+            { name: "丽的面家", type: "云吞面", lat: 23.125, lng: 113.28, address: "广州", note: "", dishes: "吃云吞面，偏港式，云吞偏大喜欢加鲜虾跟芝麻油，海鲜汤底，白灼猪润猪腰还不错", city: "gz" },
+            { name: "吴财记", type: "云吞面", lat: 23.115, lng: 113.245, address: "广州", note: "", dishes: "偏广式，云吞小巧，喜欢三肥七瘦纯肉，汤更顺滑", city: "gz" },
+            { name: "恩宁刘福记 竹升面", type: "云吞面", lat: 23.115, lng: 113.236, address: "港式", note: "", dishes: "", city: "gz" },
+            { name: "旺记烧腊", type: "烧腊", lat: 23.122, lng: 113.238, address: "逢源路", note: "", dishes: "，只吃烧鹅，烧鸭也不错，其他不行", city: "gz" },
+            { name: "永兴烧腊 叉烧好吃", type: "烧腊", lat: 23.11, lng: 113.25, address: "广州", note: "", dishes: "花叉", city: "gz" },
+            { name: "炳胜品味", type: "烧腊", lat: 23.1182, lng: 113.3256, address: "比永兴好一点", note: "黑珍珠", dishes: "脆皮叉烧, 菠萝包", city: "gz" },
+            { name: "立庆坊", type: "烧腊", lat: 23.12, lng: 113.25, address: "广州", note: "", dishes: "正宗马岗鹅", city: "gz" },
+            { name: "惠来", type: "烧腊", lat: 23.13, lng: 113.24, address: "龙岗路口对面", note: "", dishes: "吃鸡", city: "gz" },
+            { name: "云浮烧鸭", type: "烧腊", lat: 23.14, lng: 113.23, address: "鹅掌坦百德新街市门口", note: "", dishes: "", city: "gz" },
+            { name: "森成美食店", type: "烧腊", lat: 23.105, lng: 113.25, address: "南华西路73号", note: "", dishes: "脆皮烧肉无敌", city: "gz" },
+            { name: "金辉食馆", type: "烧腊", lat: 23.1, lng: 113.26, address: "海珠区同福中路金粟园12号", note: "", dishes: "豉油鸡好吃，不能吃田螺鸡", city: "gz" },
+            { name: "喜盈酒家", type: "烧腊", lat: 23.1, lng: 113.26, address: "广州", note: "", dishes: "烧鹅不错", city: "gz" },
+            { name: "旺金鸽", type: "乳鸽", lat: 23.12, lng: 113.32, address: "广州", note: "", dishes: "", city: "gz" },
+            { name: "鸽皇农庄", type: "乳鸽", lat: 23.18, lng: 113.34, address: "天河长湴店", note: "", dishes: "（或是海珠区石榴岗东大街）", city: "gz" },
+            { name: "悦宴酒家·红烧乳鸽", type: "乳鸽", lat: 23.19, lng: 113.35, address: "龙洞店", note: "", dishes: "", city: "gz" },
+            { name: "顺得来", type: "脆皖", lat: 23.127, lng: 113.268, address: "五月花广场后门的小巷", note: "", dishes: "", city: "gz" },
+            { name: "伍湛记粥品专家", type: "粥", lat: 23.12, lng: 113.24, address: "广州", note: "", dishes: "", city: "gz" },
+            { name: "标记美食新鲜猪杂", type: "粥", lat: 23.12, lng: 113.24, address: "广州", note: "", dishes: "", city: "gz" },
+            { name: "德记猪肝粥", type: "粥", lat: 23.12, lng: 113.25, address: "广州", note: "", dishes: "", city: "gz" },
+            { name: "中华广场的御手信", type: "伴手礼", lat: 23.128, lng: 113.278, address: "广州", note: "", dishes: "鸡仔饼，杏仁酥，红豆酥", city: "gz" },
+            { name: "华星冰室", type: "茶餐厅", lat: 22.2775, lng: 114.1782, address: "香港", note: "陈奕迅常去", dishes: "炒蛋多士, 奶茶", city: "hk" },
+            { name: "金华冰厅 菠萝包", type: "茶餐厅", lat: 22.3228, lng: 114.1691, address: "香港", note: "", dishes: "奶茶", city: "hk" },
+            { name: "翠华餐厅", type: "茶餐厅", lat: 22.2818, lng: 114.1555, address: "香港", note: "连锁店, 品质稳定", dishes: "奶油猪, 鱼蛋粉, 咖喱牛腩", city: "hk" },
+            { name: "食光榮", type: "茶餐厅", lat: 22.318, lng: 114.17, address: "香港", note: "", dishes: "三眼仔必佩雞扒", city: "hk" },
+            { name: "金禾阁", type: "茶餐厅", lat: 22.3813, lng: 114.1945, address: "沙田新城市广场楼下", note: "", dishes: "鱼汤汤饭（夜宵）", city: "hk" },
+            { name: "美好快餐", type: "茶餐厅", lat: 22.3813, lng: 114.1945, address: "沙田新城市广场二楼", note: "", dishes: "西士多", city: "hk" },
+            { name: "源记", type: "茶餐厅", lat: 22.2988, lng: 114.1722, address: "尖沙咀", note: "", dishes: "", city: "hk" },
+            { name: "佳记餐厅", type: "茶餐厅", lat: 22.2988, lng: 114.1722, address: "香港", note: "", dishes: "西士多", city: "hk" },
+            { name: "泰昌饼家", type: "茶餐厅", lat: 22.2825, lng: 114.1539, address: "香港", note: "", dishes: "港式蛋挞", city: "hk" },
+            { name: "瑞记", type: "茶餐厅", lat: 22.285, lng: 114.15, address: "香港", note: "", dishes: "冻奶茶", city: "hk" },
+            { name: "科记咖啡餐厅", type: "茶餐厅", lat: 22.2868, lng: 114.1486, address: "香港", note: "", dishes: "猪扒饭溏心蛋", city: "hk" },
+            { name: "金凤茶餐厅", type: "茶餐厅", lat: 22.2751, lng: 114.1728, address: "香港", note: "", dishes: "", city: "hk" },
+            { name: "兰芳园", type: "茶餐厅", lat: 22.2828, lng: 114.154, address: "香港", note: "丝袜奶茶始祖", dishes: "奶茶", city: "hk" },
+            { name: "新香园", type: "茶餐厅", lat: 22.33, lng: 114.161, address: "香港", note: "", dishes: "麻辣蛋牛治、冻奶茶、蛋牛治、猪手面", city: "hk" },
+            { name: "利苑酒家", type: "正餐", lat: 22.2798, lng: 114.1789, address: "香港", note: "", dishes: "烧肉烧腊", city: "hk" },
+            { name: "荣记饭店", type: "正餐", lat: 22.2783, lng: 114.1802, address: "湾仔宝灵顿道21号鹅颈熟食中心CF4号铺", note: "", dishes: "", city: "hk" },
+            { name: "莲香居", type: "正餐", lat: 22.2882, lng: 114.1448, address: "西营盘", note: "", dishes: "早茶", city: "hk" },
+            { name: "稻香", type: "正餐", lat: 22.3956, lng: 114.1963, address: "火炭店", note: "", dishes: "", city: "hk" },
+            { name: "端记茶楼", type: "正餐", lat: 22.39, lng: 114.11, address: "香港", note: "", dishes: "早茶", city: "hk" },
+            { name: "莲香楼", type: "正餐", lat: 22.2842, lng: 114.1538, address: "中环", note: "", dishes: "", city: "hk" },
+            { name: "牛阵", type: "正餐", lat: 22.28, lng: 114.18, address: "香港", note: "", dishes: "", city: "hk" },
+            { name: "源記甜品", type: "糖水", lat: 22.2861, lng: 114.1408, address: "香港", note: "", dishes: "桑寄生蓮子蛋茶", city: "hk" },
+            { name: "佳佳甜品 芝麻糊", type: "糖水", lat: 22.3056, lng: 114.169, address: "香港", note: "", dishes: "合桃糊,杏仁糊，蕃薯糖水，冰的白果薏米腐竹，冰的蛋花馬蹄露", city: "hk" },
+            { name: "福元湯圓", type: "糖水", lat: 22.2885, lng: 114.1932, address: "香港", note: "", dishes: "", city: "hk" },
+            { name: "北角雞蛋仔", type: "小吃", lat: 22.2918, lng: 114.2008, address: "香港", note: "", dishes: "", city: "hk" },
+            { name: "沾仔記雲吞麵", type: "小吃", lat: 22.3214, lng: 114.1614, address: "大咀角", note: "", dishes: "蝦子雲吞麵,竹昇麵", city: "hk" },
+            { name: "廟街興記", type: "小吃", lat: 22.3094, lng: 114.1702, address: "香港", note: "", dishes: "煲仔飯+必食蠔餅", city: "hk" },
+            { name: "華香園", type: "小吃", lat: 22.2974, lng: 114.1691, address: "尖沙咀海防道", note: "", dishes: "豬扒包、西多士", city: "hk" },
+            { name: "媽咪雞蛋仔", type: "小吃", lat: 22.298, lng: 114.173, address: "香港", note: "", dishes: "铜锣湾湾仔天后", city: "hk" },
+            { name: "合香園", type: "小吃", lat: 22.28, lng: 114.15, address: "香港", note: "", dishes: "瓦煲奶茶", city: "hk" },
+            { name: "德發牛丸", type: "小吃", lat: 22.298, lng: 114.172, address: "香港", note: "", dishes: "", city: "hk" },
+            { name: "水記牛腩 牛腩", type: "小吃", lat: 22.284, lng: 114.154, address: "香港", note: "", dishes: "蛋白燉鮮奶，黑芝麻糊湯圓", city: "hk" },
+            { name: "生记", type: "小吃", lat: 22.286, lng: 114.151, address: "上环", note: "", dishes: "牛腩、鱼泡、鱼腩", city: "hk" },
+            { name: "荣记粉面", type: "小吃", lat: 22.2804, lng: 114.1857, address: "铜锣湾", note: "", dishes: "", city: "hk" },
+            { name: "文记", type: "小吃", lat: 22.3032, lng: 114.1856, address: "红磡市政大厦", note: "", dishes: "大排档型，可当正餐吃，推荐晚上去，对面还有一家辣鱼蛋", city: "hk" },
+            { name: "kabo", type: "小吃", lat: 22.298, lng: 114.172, address: "尖沙咀", note: "", dishes: "汉堡", city: "hk" },
+            { name: "英记面家 叉烧牛腩面", type: "小吃", lat: 22.2858, lng: 114.1428, address: "香港", note: "只收现金", dishes: "牛杂捞面，金钱肚，仅现金支付", city: "hk" },
+            { name: "达濠仔", type: "小吃", lat: 22.32, lng: 114.16, address: "香港", note: "", dishes: "牛杂", city: "hk" },
+            { name: "卖奀记忠记", type: "小吃", lat: 22.282, lng: 114.155, address: "香港", note: "", dishes: "", city: "hk" },
+            { name: "生记粥铺", type: "小吃", lat: 22.286, lng: 114.151, address: "香港", note: "", dishes: "加猪润", city: "hk" },
+            { name: "蛇王芬", type: "小吃", lat: 22.284, lng: 114.154, address: "中环", note: "", dishes: "五蛇羹", city: "hk" },
+            { name: "面尊", type: "小吃", lat: 22.2804, lng: 114.1857, address: "铜锣湾/中环", note: "", dishes: "车仔面", city: "hk" },
+            { name: "华姐清汤腩", type: "小吃", lat: 22.2825, lng: 114.1915, address: "香港", note: "", dishes: "", city: "hk" },
+            { name: "乐园鱼蛋粉", type: "小吃", lat: 22.2804, lng: 114.1857, address: "铜锣湾", note: "", dishes: "港式鱼蛋粉", city: "hk" },
+            { name: "庙街牛什", type: "小吃", lat: 22.3094, lng: 114.1702, address: "香港", note: "", dishes: "", city: "hk" },
+            { name: "红磡鸡蛋仔", type: "小吃", lat: 22.3032, lng: 114.1856, address: "香港", note: "", dishes: "", city: "hk" },
+            { name: "兴记", type: "小吃", lat: 22.3094, lng: 114.1702, address: "香港", note: "", dishes: "咖喱金钱肚", city: "hk" },
+            { name: "新兴食家", type: "小吃", lat: 22.2858, lng: 114.1428, address: "香港", note: "", dishes: "炸鲜奶、鸡球大包", city: "hk" },
+            { name: "bakehouse", type: "烘焙", lat: 22.2985, lng: 114.1735, address: "香港", note: "", dishes: "甜甜圈和肉桂卷，蛋挞难吃", city: "hk" },
+            { name: "vission bakery", type: "烘焙", lat: 22.282, lng: 114.1545, address: "香港", note: "", dishes: "牛角酥等填馅类", city: "hk" },
+            { name: "owls choux", type: "烘焙", lat: 22.298, lng: 114.172, address: "香港", note: "", dishes: "泡芙，最多一人一个下午三点半才开门", city: "hk" },
+            { name: "shari shari kakigori house", type: "烘焙", lat: 22.2804, lng: 114.1857, address: "香港", note: "", dishes: "冰屋", city: "hk" },
+            { name: "tokachi-milky", type: "烘焙", lat: 22.298, lng: 114.172, address: "香港", note: "", dishes: "泡芙", city: "hk" },
+            { name: "棋哥", type: "烧腊", lat: 22.28, lng: 114.18, address: "香港", note: "", dishes: "烧鹅脆皮", city: "hk" },
+            { name: "翠园", type: "烧腊", lat: 22.295, lng: 114.169, address: "香港", note: "", dishes: "新鲜", city: "hk" },
+            { name: "甘堂 烧鹅", type: "烧腊", lat: 22.282, lng: 114.155, address: "香港", note: "", dishes: "甘子虾蹄 肉质好，烧味下垫蜜豆是老派做法", city: "hk" },
+            { name: "一乐 便宜", type: "烧腊", lat: 22.2824, lng: 114.1558, address: "香港", note: "", dishes: "配饭要点油饭", city: "hk" },
+            { name: "鏞記酒家", type: "烧腊", lat: 22.2818, lng: 114.1552, address: "香港", note: "", dishes: "精致综合可以", city: "hk" },
+            { name: "新桂香", type: "烧腊", lat: 22.27, lng: 114.238, address: "周润发也去", note: "", dishes: "", city: "hk" },
+            { name: "香港避风塘兴记", type: "海鲜", lat: 22.3094, lng: 114.1702, address: "香港", note: "", dishes: "", city: "hk" },
+            { name: "国金轩", type: "海鲜", lat: 22.295, lng: 114.17, address: "香港", note: "", dishes: "太史五蛇羹", city: "hk" },
+            { name: "疍家菜", type: "海鲜", lat: 22.28, lng: 114.18, address: "香港", note: "", dishes: "", city: "hk" },
+            { name: "海港荟", type: "海鲜", lat: 22.295, lng: 114.17, address: "尖沙咀", note: "", dishes: "", city: "hk" },
+            { name: "驹记海鲜大排档", type: "海鲜", lat: 22.281, lng: 114.181, address: "铜锣湾", note: "", dishes: "", city: "hk" },
+            { name: "喜记避风塘炒蟹", type: "海鲜", lat: 22.2805, lng: 114.182, address: "铜锣湾", note: "", dishes: "", city: "hk" },
+            { name: "旺角果栏", type: "海鲜", lat: 22.313, lng: 114.168, address: "香港", note: "", dishes: "开榴莲", city: "hk" },
+        ];
+
+        // --- CONSTANTS ---
+        const colors = {
+            "糖水": "#EC4899", "烧腊": "#EF4444", "正餐": "#C5A059",
+            "早茶": "#10B981", "小吃": "#3B82F6", "肠粉": "#8B5CF6",
+            "下水": "#F59E0B", "茶餐厅": "#F97316", "烘焙": "#8B4513",
+            "海鲜": "#06B6D4", "默认": "#6B7280"
+        };
+        const CENTERS = {
+            'gz': [23.1291, 113.2644],
+            'hk': [22.3193, 114.1694]
+        };
+
+        // --- STATE ---
+        let map;
+        let markersSource = []; // Keep track of marker objects
+        let currentCity = 'gz';
+        let currentFilter = 'all';
+        let currentSelection = null; // Currently selected place object
+
+        // Drawer State: 'list' | 'card' | 'collapsed'
+        let drawerState = 'list';
+
+        // --- MATH UTILS for GZ Coordinates ---
+        const x_pi = 3.14159265358979324 * 3000.0 / 180.0;
+        function wgs84togcj02(lng, lat) {
+            if (outOfChina(lng, lat)) return [lng, lat];
+            let dlat = transformlat(lng - 105.0, lat - 35.0);
+            let dlng = transformlng(lng - 105.0, lat - 35.0);
+            let radlat = lat / 180.0 * Math.PI;
+            let magic = Math.sin(radlat);
+            magic = 1 - 0.00669342162296594323 * magic * magic;
+            let sqrtmagic = Math.sqrt(magic);
+            dlat = (dlat * 180.0) / ((6378245.0 * (1 - 0.00669342162296594323)) / (magic * sqrtmagic) * Math.PI);
+            dlng = (dlng * 180.0) / (6378245.0 / sqrtmagic * Math.cos(radlat) * Math.PI);
+            return [lng + dlng, lat + dlat];
+        }
+        function transformlat(lng, lat) {
+            let ret = -100.0 + 2.0 * lng + 3.0 * lat + 0.2 * lat * lat + 0.1 * lng * lat + 0.2 * Math.sqrt(Math.abs(lng));
+            ret += (20.0 * Math.sin(6.0 * lng * Math.PI) + 20.0 * Math.sin(2.0 * lng * Math.PI)) * 2.0 / 3.0;
+            ret += (20.0 * Math.sin(lat * Math.PI) + 40.0 * Math.sin(lat / 3.0 * Math.PI)) * 2.0 / 3.0;
+            ret += (160.0 * Math.sin(lat / 12.0 * Math.PI) + 320 * Math.sin(lat * Math.PI / 30.0)) * 2.0 / 3.0;
+            return ret;
+        }
+        function transformlng(lng, lat) {
+            let ret = 300.0 + lng + 2.0 * lat + 0.1 * lng * lng + 0.1 * lng * lat + 0.1 * Math.sqrt(Math.abs(lng));
+            ret += (20.0 * Math.sin(6.0 * lng * Math.PI) + 20.0 * Math.sin(2.0 * lng * Math.PI)) * 2.0 / 3.0;
+            ret += (20.0 * Math.sin(lng * Math.PI) + 40.0 * Math.sin(lng / 3.0 * Math.PI)) * 2.0 / 3.0;
+            ret += (150.0 * Math.sin(lng / 12.0 * Math.PI) + 300.0 * Math.sin(lng / 30.0 * Math.PI)) * 2.0 / 3.0;
+            return ret;
+        }
+        function outOfChina(lng, lat) {
+            return (lng < 72.004 || lng > 137.8347 || lat < 0.8293 || lat > 55.8271);
+        }
+
+        // --- INITIALIZATION ---
+        function init() {
+            // Map Setup (Higher Init Zoom)
+            map = L.map('map', { zoomControl: false }).setView(CENTERS['gz'], 16);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; CARTO',
+                maxZoom: 20
+            }).addTo(map);
+
+            // Interaction: Map Click Background -> Deselect
+            map.on('click', (e) => {
+                // Leaflet handles marker clicks separately. If this fires, it's background.
+                resetSelection();
+            });
+
+            renderFilters();
+            renderMapAndList();
+
+            // Initial Animation
+            updateDrawer('list');
+        }
+
+        // --- CORE LOGIC ---
+        function switchCity(city) {
+            currentCity = city;
+            currentFilter = 'all';
+
+            // Toggle UI Buttons
+            document.getElementById('btn-gz').className = city === 'gz'
+                ? 'px-6 py-2 rounded-full text-sm font-bold transition-all text-white bg-mag-navy shadow-md'
+                : 'px-6 py-2 rounded-full text-sm font-bold transition-all text-gray-500 hover:text-mag-navy';
+            document.getElementById('btn-hk').className = city === 'hk'
+                ? 'px-6 py-2 rounded-full text-sm font-bold transition-all text-white bg-mag-navy shadow-md'
+                : 'px-6 py-2 rounded-full text-sm font-bold transition-all text-gray-500 hover:text-mag-navy';
+
+            resetSelection(); // Reset everything
+
+            // Re-render
+            renderFilters();
+            renderMapAndList();
+
+            // Move Map (Faster)
+            map.flyTo(CENTERS[city], 16, { animate: true, duration: 0.5 });
+        }
+
+        function filterMap(type) {
+            // If clicking the ALREADY active filter, and we are in card mode, toggle back to list
+            if (currentFilter === type && drawerState === 'card') {
+                resetSelection(); // Go back to list
+                return;
+            }
+
+            currentFilter = type;
+            renderFilters();
+
+            if (currentSelection && currentSelection.type !== type && type !== 'all') {
+                resetSelection();
+            } else {
+                renderMapAndList();
+                if (drawerState !== 'list') updateDrawer('list');
+            }
+        }
+
+        function resetSelection() {
+            currentSelection = null;
+            map.closePopup();
+            updateDrawer(drawerState === 'card' ? 'list' : drawerState); // If card, go back to list
+        }
+
+        function selectPlace(place) {
+            currentSelection = place;
+
+            // 1. Center Map & Open Popup
+            const offsetLat = 0.0005; // Slightly shift map so marker is center-top relative to drawer
+            map.flyTo([place.lat - offsetLat, place.lng], 18, { animate: true, duration: 1.2 });
+
+            // Find Marker to Open Popup
+            const marker = markersSource.find(m => m.options.placeData.name === place.name);
+            if (marker) marker.openPopup();
+
+            // 2. Render Card View
+            renderCardView(place);
+
+            // 3. Update Drawer State: Hide List, Show Card
+            updateDrawer('card');
+        }
+
+        // --- RENDERING ---
+        function renderFilters() {
+            const container = document.getElementById('filterContainer');
+            container.innerHTML = '';
+
+            const cityItems = placemarks.filter(p => p.city === currentCity);
+            const categories = ['全部', ...new Set(cityItems.map(p => p.type))];
+
+            categories.forEach(cat => {
+                const isActive = currentFilter === (cat === '全部' ? 'all' : cat);
+                const btn = document.createElement('button');
+                btn.className = `px-5 py-2 text-xs font-bold rounded-full whitespace-nowrap transition-all duration-300 ${isActive
+                    ? 'bg-mag-navy text-white shadow-lg transform scale-105'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`;
+                btn.innerText = cat;
+                btn.onclick = (e) => {
+                    e.stopPropagation(); // Prevent drawer drag
+                    filterMap(cat === '全部' ? 'all' : cat);
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function renderMapAndList() {
+            // Clear Markers
+            markersSource.forEach(m => map.removeLayer(m));
+            markersSource = [];
+
+            // DOM List
+            const listDiv = document.getElementById('listView');
+            listDiv.innerHTML = ''; // Clear list
+
+            const filtered = placemarks.filter(p => p.city === currentCity && (currentFilter === 'all' || p.type === currentFilter));
+
+            filtered.forEach(place => {
+                const color = colors[place.type] || '#6B7280';
+
+                // Add Map Marker
+                const icon = L.divIcon({
+                    className: '',
+                    html: `<div style="background-color: ${color}; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.2);"></div>`,
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10],
+                    popupAnchor: [0, -10]
+                });
+
+                const marker = L.marker([place.lat, place.lng], { icon: icon, placeData: place }).addTo(map);
+
+                // Simple Popup (Card is in drawer)
+                marker.bindPopup(getPopupHtml(place, color));
+                marker.on('click', () => selectPlace(place));
+                markersSource.push(marker);
+
+                // Add List Item
+                const item = document.createElement('div');
+                item.className = "bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-start gap-4 active:scale-98 transition-transform";
+                item.innerHTML = `
+                    <div class="w-2 h-12 rounded-full flex-shrink-0" style="background-color: ${color}"></div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-start">
+                            <h3 class="font-serif font-bold text-lg text-slate-900">${place.name}</h3>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-1">${place.address || (place.city === 'hk' ? '香港' : '广州')}</p>
+                        ${place.note ? `<div class="mt-2 inline-flex items-center gap-1 px-2 py-1 bg-red-50 text-red-600 rounded-lg text-[10px] font-bold border border-red-100"><i class="fa-solid fa-triangle-exclamation"></i> ${place.note}</div>` : ''}
+                    </div>
+                `;
+                item.onclick = () => selectPlace(place);
+                listDiv.appendChild(item);
+            });
+        }
+
+        function renderCardView(place) {
+            const container = document.getElementById('selectedView');
+            const color = colors[place.type] || '#6B7280';
+            const isHK = place.city === 'hk';
+
+            let mapLink;
+            if (isHK) {
+                mapLink = `https://www.google.com/maps/search/?api=1&query=${place.name}+${place.address}`;
+            } else {
+                const gcj = wgs84togcj02(place.lng, place.lat);
+                mapLink = `https://uri.amap.com/marker?position=${gcj[0]},${gcj[1]}&name=${place.name}`;
+            }
+
+            container.innerHTML = `
+                <div class="flex-1 overflow-y-auto pb-safe">
+                    <!-- Header -->
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold text-white mb-2" style="background-color: ${color}">${place.type}</span>
+                            <h1 class="font-serif font-bold text-2xl text-slate-800 leading-tight">${place.name}</h1>
+                        </div>
+                        <button onclick="resetSelection()" class="w-8 h-8 rounded-full bg-slate-100/80 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors">
+                             <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Info Badges -->
+                    <div class="flex flex-wrap gap-2 mb-6">
+                         <div class="px-3 py-1.5 bg-slate-100 rounded-lg text-xs text-slate-600 font-medium flex items-center gap-1">
+                            <i class="fa-solid fa-location-dot text-slate-400"></i> ${place.address || (isHK ? '香港' : '广州')}
+                         </div>
+                         ${place.note ? `<div class="px-3 py-1.5 bg-red-50 rounded-lg text-xs text-red-600 font-bold flex items-center gap-1 border border-red-100"><i class="fa-solid fa-circle-info"></i> ${place.note}</div>` : ''}
+                    </div>
+                    
+                    <!-- Must Try Section -->
+                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-6 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-mag-gold"></div>
+                        <h3 class="text-xs font-bold text-mag-gold tracking-widest uppercase mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-star"></i> Must Try / 推荐
+                        </h3>
+                        <p class="text-slate-700 leading-relaxed font-medium text-base">
+                            ${place.dishes}
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Footer Actions -->
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <a href="${mapLink}" target="_blank" class="flex items-center justify-center w-full py-3.5 bg-mag-navy text-white rounded-xl text-sm font-bold shadow-lg shadow-mag-navy/20 hover:bg-slate-800 transition-all active:scale-95">
+                        <i class="fa-solid fa-location-arrow mr-2"></i> 导航前往 (${isHK ? 'Google Maps' : '高德地图'})
+                    </a>
+                </div>
+            `;
+        }
+
+        function getPopupHtml(place, color) {
+            // Simplified Card for Map Popup
+            const isHK = place.city === 'hk';
+            let mapLink;
+            if (isHK) {
+                mapLink = `https://www.google.com/maps/search/?api=1&query=${place.name}+${place.address}`;
+            } else {
+                const gcj = wgs84togcj02(place.lng, place.lat);
+                mapLink = `https://uri.amap.com/marker?position=${gcj[0]},${gcj[1]}&name=${place.name}`;
+            }
+
+            return `
+                <div class="p-4 font-sans">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-serif font-bold text-lg text-slate-800 leading-tight">${place.name}</h3>
+                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded text-white ml-2 flex-shrink-0" style="background-color: ${color}">${place.type}</span>
+                    </div>
+                    ${place.note ? `<p class="text-[10px] text-red-500 font-bold mb-2"><i class="fa-solid fa-triangle-exclamation"></i> ${place.note}</p>` : ''}
+                    <div class="text-xs text-slate-500 mb-3 line-clamp-2">
+                        <span class="text-mag-gold font-bold">推荐:</span> ${place.dishes}
+                    </div>
+                    <a href="${mapLink}" target="_blank" class="block w-full py-2 bg-slate-100 text-slate-700 text-center rounded-lg text-xs font-bold hover:bg-slate-200">
+                        导航去这里
+                    </a>
+                </div>
+            `;
+        }
+
+        // --- DRAWER INTERACTION ---
+        const drawer = document.getElementById('drawerPanel');
+        const listDiv = document.getElementById('listView');
+        const selectedDiv = document.getElementById('selectedView');
+        const filterContainer = document.getElementById('filterContainer');
+        const dragArea = document.getElementById('dragArea');
+
+        // Drawer Modes
+        // 'list': Expanded, shows List.
+        // 'card': Expanded (but short), shows Card.
+        // 'collapsed': Collapsed, shows Filters + Peek.
+
+        function updateDrawer(state) {
+            drawerState = state;
+            const filterHeight = filterContainer.offsetHeight + 60; // Approximate header height including handle
+
+            if (state === 'list') {
+                listDiv.classList.remove('hidden');
+                selectedDiv.classList.add('hidden');
+                drawer.style.transform = `translateY(0)`; // Full height available
+            }
+            else if (state === 'collapsed') {
+                // Show list (peek) or card (bottom peek) - usually Filter Row is what we want visible
+                // For 'collapsed', we hide everything except header
+                drawer.style.transform = `translateY(calc(100% - ${filterHeight}px))`;
+            }
+            else if (state === 'card') {
+                listDiv.classList.add('hidden');
+                selectedDiv.classList.remove('hidden');
+
+                // Calculate Card Height to snap nicely?
+                // Or just show full drawer but with Card content (which is shorter usually)
+                // If we want "Only category row and card", we can set transform based on card height?
+                // But Card height is dynamic.
+                // That's fine for Pro Max clean look.
+                drawer.style.transform = `translateY(0)`;
+            }
+        }
+
+        // Touch Logic
+        let startY = 0;
+        let startScrollTop = 0;
+        let isDragging = false;
+        let activeTouchArea = null;
+
+        // Handle Bar Drag
+        dragArea.addEventListener('touchstart', (e) => {
+            startY = e.touches[0].clientY;
+            isDragging = true;
+            activeTouchArea = 'handle';
+            drawer.style.transition = 'none';
+        }, { passive: false });
+
+        // List Drag (Only if at top)
+        listDiv.addEventListener('touchstart', (e) => {
+            if (listDiv.scrollTop <= 0) {
+                startY = e.touches[0].clientY;
+                startScrollTop = listDiv.scrollTop;
+                // We don't set isDragging immediately; we wait for move to see direction
+                activeTouchArea = 'list';
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!activeTouchArea) return;
+
+            const currentY = e.touches[0].clientY;
+            const deltaY = currentY - startY;
+
+            if (activeTouchArea === 'handle') {
+                e.preventDefault();
+                // Logic to visually move drawer could go here
+            } else if (activeTouchArea === 'list') {
+                // If pulling down while at top
+                if (deltaY > 0 && listDiv.scrollTop <= 0) {
+                    isDragging = true;
+                    // Visual feedback if needed
+                }
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', (e) => {
+            if (!activeTouchArea) return;
+
+            const endY = e.changedTouches[0].clientY;
+            const deltaY = endY - startY;
+
+            if (activeTouchArea === 'handle' || (activeTouchArea === 'list' && isDragging)) {
+                drawer.style.transition = 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)';
+
+                if (deltaY > 60) {
+                    // Drag Down
+                    if (drawerState === 'list') updateDrawer('collapsed');
+                    else if (drawerState === 'card') updateDrawer('collapsed');
+                } else if (deltaY < -60) {
+                    // Drag Up
+                    if (drawerState === 'collapsed') updateDrawer(currentSelection ? 'card' : 'list');
+                    else if (drawerState === 'card') updateDrawer('list');
+                }
+            }
+
+            isDragging = false;
+            activeTouchArea = null;
+        });
+
+        // Start
+        setTimeout(init, 100);
+
+    </script>
+</body>
+
+</html>
