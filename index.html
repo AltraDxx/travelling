@@ -248,8 +248,10 @@
                 el.classList.replace('fa-circle-check', 'fa-circle');
                 el.classList.add('fa-regular'); el.classList.remove('fa-solid');
             }
+            saveProgress(); // Trigger save on toggle
         }
     </script>
+    <script src="storage_script.js"></script>
 </head>
 
 <body class="font-sans antialiased">
