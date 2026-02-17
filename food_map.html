@@ -133,16 +133,24 @@
     <div id="drawerPanel"
         class="absolute bottom-0 left-0 right-0 z-30 flex flex-col shadow-[0_-10px_40px_rgba(0,0,0,0.1)] rounded-t-[32px] bg-white/95 backdrop-blur-xl border-t border-white/60 h-[85vh] touch-auto">
 
-        <!-- Drag Handle Area (Larger Hit Area) -->
-        <div id="dragArea"
-            class="w-full h-10 flex items-center justify-center flex-shrink-0 cursor-grab active:cursor-grabbing hover:bg-white/50 transition-colors">
-            <div class="w-12 h-1.5 bg-gray-300 rounded-full mix-blend-multiply"></div>
-        </div>
-
         <!-- Filter Row (Sticky Header of Drawer) -->
-        <div class="px-5 pb-3 flex-shrink-0 border-b border-gray-100/50">
+        <div
+            class="px-5 pb-3 flex-shrink-0 border-b border-gray-100/50 bg-white/95 backdrop-blur-xl z-20 rounded-t-[32px] pt-4">
+            <!-- Drag Handle Area (Moved inside for sticky) -->
+            <div id="dragArea"
+                class="w-full h-6 flex items-center justify-center flex-shrink-0 cursor-grab active:cursor-grabbing hover:bg-white/50 transition-colors -mt-2 mb-2">
+                <div class="w-12 h-1.5 bg-gray-300 rounded-full mix-blend-multiply"></div>
+            </div>
+
             <div id="filterContainer" class="flex gap-2 overflow-x-auto hide-scrollbar pb-1 pointer-events-auto">
                 <!-- Filters injected by JS -->
+            </div>
+
+            <!-- Category Tip (Hidden by default) -->
+            <div id="categoryTip"
+                class="hidden mt-3 text-xs text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-start gap-2">
+                <i class="fa-solid fa-lightbulb text-mag-gold mt-0.5"></i>
+                <p id="categoryTipText" class="leading-relaxed"></p>
             </div>
         </div>
 
@@ -164,138 +172,139 @@
 
     <script>
         // --- DATA PLACEHOLDER ---
+        const categoryInfo = {"正餐": "炒牛河要在酒楼吃，干炒牛河就是需要碟底无油粉边略焦；湿炒牛河要勾芡", "早茶": "时间：5:30-11:00 | 技巧: 盖子揭开挂在壶边表示需要加水。", "烧腊": "烧鹅左腿最尊贵(也最贵)。", "茶餐厅": "行话: '走冰'去冰, '少甜'半糖。"};
         const placemarks = [
-            { name: "糊天甜品", type: "糖水", lat: 23.1285, lng: 113.2458, address: "一品为先食得好对面", note: "", dishes: "", city: "gz" },
-            { name: "兰芳园", type: "糖水", lat: 23.131, lng: 113.245, address: "西华路第一津", note: "", dishes: "", city: "gz" },
-            { name: "沙湾甜品", type: "糖水", lat: 23.1315, lng: 113.2455, address: "西华路第一津", note: "主要服务态度差", dishes: "招牌的奶制品 姜撞奶双皮奶凤凰炒奶糊", city: "gz" },
-            { name: "南信", type: "糖水", lat: 23.13031, lng: 113.26534, address: "广州", note: "", dishes: "比较综合 双皮奶 姜撞奶", city: "gz" },
-            { name: "开记", type: "糖水", lat: 23.11728, lng: 113.24704, address: "上下九", note: "", dishes: "绿豆沙、马蹄沙", city: "gz" },
-            { name: "百花甜品", type: "糖水", lat: 23.13059, lng: 113.26516, address: "广州", note: "", dishes: "番薯糖水 绿豆沙", city: "gz" },
-            { name: "玫瑰甜品", type: "糖水", lat: 23.1299, lng: 113.26427, address: "广州", note: "", dishes: "凤凰蛋奶糊", city: "gz" },
-            { name: "梁阿珍", type: "糖水", lat: 23.12902, lng: 113.26448, address: "广州", note: "", dishes: "云吞皮糖水", city: "gz" },
-            { name: "清润坊", type: "糖水", lat: 23.12958, lng: 113.26563, address: "广州", note: "", dishes: "南洋渣咂和龟苓膏", city: "gz" },
-            { name: "合众肠粉店", type: "其他", lat: 23.125, lng: 113.244, address: "龙津路", note: "", dishes: "", city: "gz" },
-            { name: "炜明肠粉店", type: "其他", lat: 23.128, lng: 113.248, address: "陈家祠附近", note: "", dishes: "", city: "gz" },
-            { name: "合兴小食店", type: "其他", lat: 23.1315, lng: 113.2455, address: "西华路第一津", note: "", dishes: "濑粉+咸菜 辣可以多放一点", city: "gz" },
-            { name: "德记", type: "其他", lat: 23.13003, lng: 113.26504, address: "广州", note: "", dishes: "", city: "gz" },
-            { name: "源记肠粉", type: "其他", lat: 23.125, lng: 113.24, address: "华贵路93号", note: "", dishes: "", city: "gz" },
-            { name: "穗银肠粉", type: "其他", lat: 23.124, lng: 113.284, address: "大东街道东川路94号之一(近东川新街市", note: "", dishes: "", city: "gz" },
-            { name: "顺势牛杂汤", type: "牛杂/下水", lat: 23.133, lng: 113.246, address: "金花街道太保直街与吉祥新街交叉口南80米", note: "", dishes: "牛三星汤", city: "gz" },
-            { name: "一品为先食得好", type: "牛杂/下水", lat: 23.1288, lng: 113.2455, address: "和安街67号", note: "", dishes: "鸡杂汤+猪杂汤", city: "gz" },
-            { name: "西关牛杂", type: "牛杂/下水", lat: 23.1315, lng: 113.2455, address: "西华路金花直街53号金发食杂店门口", note: "", dishes: "就是牛佬 牛杂+猪肠 牛三星和牛杂汤", city: "gz" },
-            { name: "南信", type: "牛杂/下水", lat: 23.13017, lng: 113.265, address: "广州", note: "", dishes: "牛三星加一点腩汁", city: "gz" },
-            { name: "达扬炖品", type: "其他", lat: 23.1256, lng: 113.275, address: "向前走，德政路，大概500米，有分店，出品一样，位置多", note: "", dishes: "米其林必比登 除了椰子汤 还有鱼头炖汤等等更本地的汤", city: "gz" },
-            { name: "炳胜品味", type: "正餐", lat: 23.12888, lng: 113.26399, address: "广州", note: "", dishes: "", city: "gz" },
-            { name: "同发号", type: "正餐", lat: 23.12954, lng: 113.26397, address: "广州", note: "", dishes: "", city: "gz" },
-            { name: "万年胜记酒楼", type: "正餐", lat: 23.12996, lng: 113.26449, address: "广州", note: "", dishes: "", city: "gz" },
-            { name: "信记", type: "正餐", lat: 23.113, lng: 113.26, address: "越秀区长提大马路（一德路地铁站A口", note: "", dishes: "米其林一星", city: "gz" },
-            { name: "森焱食馆", type: "正餐", lat: 23.095, lng: 113.255, address: "海珠区同福西路", note: "", dishes: "椒盐九肚鱼 下酒菜比较咸", city: "gz" },
-            { name: "广州酒家", type: "正餐", lat: 23.12809, lng: 113.26583, address: "广州", note: "", dishes: "", city: "gz" },
-            { name: "梁家菜馆", type: "正餐", lat: 23.12817, lng: 113.26427, address: "广州", note: "", dishes: "", city: "gz" },
-            { name: "壹厨饭店", type: "正餐", lat: 23.1318, lng: 113.27087, address: "越秀", note: "", dishes: "白切鸡", city: "gz" },
-            { name: "醉贤居", type: "正餐", lat: 23.12779, lng: 113.26342, address: "广州", note: "", dishes: "鸡不错", city: "gz" },
-            { name: "肥姐美食", type: "正餐", lat: 23.095, lng: 113.255, address: "环珠直街43号", note: "", dishes: "桶仔骨 金沙竹肠 葱油吊水鲩鱼 炒通菜和炒老友粉 冰镇黄鳝", city: "gz" },
-            { name: "多福美食馆", type: "正餐", lat: 23.13175, lng: 113.26993, address: "越秀", note: "", dishes: "啫啫黄鳝煲和盐焗鹅翅", city: "gz" },
-            { name: "贰少品味", type: "正餐", lat: 23.096, lng: 113.254, address: "同福中路与伍家祠道交叉口西南240米", note: "", dishes: "主要吃水律蛇 但是现在似乎不能吃蛇 但其他菜性价比也可以", city: "gz" },
-            { name: "众源美食", type: "正餐", lat: 23.126, lng: 113.248, address: "光复北路555号", note: "", dishes: "打边炉比较出名", city: "gz" },
-            { name: "同乐居菜馆", type: "正餐", lat: 23.125, lng: 113.252, address: "惠福西路186号", note: "", dishes: "黄鳝啫啫煲、大肠", city: "gz" },
-            { name: "惠食佳", type: "正餐", lat: 23.107, lng: 113.265, address: "海珠", note: "", dishes: "铁板 生姜雪糕", city: "gz" },
-            { name: "白天鹅玉堂春暖", type: "早茶", lat: 23.12851, lng: 113.26383, address: "广州", note: "", dishes: "", city: "gz" },
-            { name: "广州宾馆", type: "早茶", lat: 23.12836, lng: 113.26543, address: "广州", note: "", dishes: "", city: "gz" },
-            { name: "宝汉酒家", type: "早茶", lat: 23.1281, lng: 113.26578, address: "广州", note: "", dishes: "", city: "gz" },
-            { name: "荣华楼", type: "早茶", lat: 23.13059, lng: 113.26474, address: "广州", note: "", dishes: "", city: "gz" },
-            { name: "陶然轩", type: "早茶", lat: 23.109, lng: 113.298, address: "海珠", note: "", dishes: "手工", city: "gz" },
-            { name: "御宝轩", type: "早茶", lat: 23.12761, lng: 113.26444, address: "广州", note: "需要预约", dishes: "米二", city: "gz" },
-            { name: "喜势点茶居", type: "早茶", lat: 23.129, lng: 113.264, address: "老城区", note: "", dishes: "沙翁", city: "gz" },
-            { name: "新文记", type: "其他", lat: 23.105, lng: 113.26, address: "市二宫地铁站附近", note: "", dishes: "", city: "gz" },
-            { name: "煲笼兴", type: "其他", lat: 23.105, lng: 113.26, address: "老店", note: "", dishes: "有点咸", city: "gz" },
-            { name: "丽的面家", type: "云吞面", lat: 23.128, lng: 113.265, address: "老城区", note: "", dishes: "吃云吞面 偏港式 云吞偏大喜欢加鲜虾跟芝麻油 海鲜汤底 白灼猪润猪腰还不错", city: "gz" },
-            { name: "吴财记", type: "云吞面", lat: 23.115, lng: 113.245, address: "老城区", note: "", dishes: "偏广式 云吞小巧 喜欢三肥七瘦纯肉 汤更顺滑", city: "gz" },
-            { name: "恩宁刘福记", type: "云吞面", lat: 23.115, lng: 113.236, address: "港式", note: "", dishes: "竹升面", city: "gz" },
-            { name: "旺记烧腊", type: "烧腊", lat: 23.122, lng: 113.238, address: "逢源路", note: "", dishes: "只吃烧鹅 烧鸭也不错 其他不行", city: "gz" },
-            { name: "永兴烧腊", type: "烧腊", lat: 23.128, lng: 113.264, address: "老城区", note: "", dishes: "叉烧好吃 花叉", city: "gz" },
-            { name: "炳胜品味", type: "烧腊", lat: 23.13033, lng: 113.26354, address: "广州", note: "", dishes: "", city: "gz" },
-            { name: "立庆坊", type: "烧腊", lat: 23.12765, lng: 113.26585, address: "广州", note: "", dishes: "正宗马岗鹅", city: "gz" },
-            { name: "惠来", type: "烧腊", lat: 23.128, lng: 113.264, address: "龙岗路口对面", note: "", dishes: "吃鸡", city: "gz" },
-            { name: "云浮烧鸭", type: "烧腊", lat: 23.14, lng: 113.23, address: "鹅掌坦百德新街市门口", note: "", dishes: "", city: "gz" },
-            { name: "森成美食店", type: "烧腊", lat: 23.105, lng: 113.25, address: "南华西路73号", note: "", dishes: "脆皮烧肉无敌", city: "gz" },
-            { name: "金辉食馆", type: "烧腊", lat: 23.1, lng: 113.26, address: "海珠区同福中路金粟园12号", note: "", dishes: "豉油鸡好吃 不能吃田螺鸡", city: "gz" },
-            { name: "喜盈酒家", type: "烧腊", lat: 23.1291, lng: 113.26544, address: "广州", note: "", dishes: "烧鹅不错", city: "gz" },
-            { name: "旺金鸽", type: "乳鸽", lat: 23.12, lng: 113.32, address: "天河", note: "", dishes: "", city: "gz" },
-            { name: "鸽皇农庄", type: "乳鸽", lat: 23.18, lng: 113.35, address: "天河长湴店", note: "", dishes: "", city: "gz" },
-            { name: "悦宴酒家", type: "乳鸽", lat: 23.18, lng: 113.35, address: "龙洞店", note: "", dishes: "", city: "gz" },
-            { name: "顺得来", type: "脆皖", lat: 23.127, lng: 113.27, address: "五月花广场后门的小巷", note: "", dishes: "", city: "gz" },
-            { name: "伍湛记", type: "粥", lat: 23.12, lng: 113.24, address: "老城区", note: "", dishes: "", city: "gz" },
-            { name: "标记美食", type: "粥", lat: 23.128, lng: 113.265, address: "老城区", note: "", dishes: "", city: "gz" },
-            { name: "德记", type: "粥", lat: 23.12798, lng: 113.26428, address: "广州", note: "", dishes: "", city: "gz" },
-            { name: "御手信", type: "伴手礼", lat: 23.128, lng: 113.275, address: "老城区", note: "", dishes: "鸡仔饼 杏仁酥 红豆酥", city: "gz" },
-            { name: "华星冰室", type: "茶餐厅", lat: 22.2775, lng: 114.1782, address: "湾仔/尖沙咀", note: "", dishes: "", city: "hk" },
-            { name: "金华冰厅", type: "茶餐厅", lat: 22.3228, lng: 114.1691, address: "湾仔/尖沙咀", note: "", dishes: "菠萝包 奶茶", city: "hk" },
-            { name: "翠华餐厅", type: "茶餐厅", lat: 22.2982, lng: 114.1738, address: "湾仔/尖沙咀", note: "", dishes: "", city: "hk" },
-            { name: "食光荣", type: "茶餐厅", lat: 22.318, lng: 114.17, address: "湾仔/尖沙咀", note: "", dishes: "三眼仔必佩雞扒", city: "hk" },
-            { name: "金禾阁", type: "茶餐厅", lat: 22.38, lng: 114.195, address: "沙田新城市广场楼下", note: "", dishes: "鱼汤汤饭", city: "hk" },
-            { name: "美好快餐", type: "茶餐厅", lat: 22.38, lng: 114.195, address: "沙田新城市广场二楼", note: "", dishes: "西士多", city: "hk" },
-            { name: "源记", type: "茶餐厅", lat: 22.2988, lng: 114.1722, address: "尖沙咀", note: "", dishes: "", city: "hk" },
-            { name: "佳记餐厅", type: "茶餐厅", lat: 22.2988, lng: 114.1722, address: "湾仔/尖沙咀", note: "", dishes: "西士多", city: "hk" },
-            { name: "泰昌饼家", type: "茶餐厅", lat: 22.2825, lng: 114.1539, address: "中环/上环", note: "", dishes: "港式蛋挞", city: "hk" },
-            { name: "瑞记", type: "茶餐厅", lat: 22.2858, lng: 114.1502, address: "中环/上环", note: "", dishes: "冻奶茶", city: "hk" },
-            { name: "科记咖啡餐厅", type: "茶餐厅", lat: 22.2868, lng: 114.1486, address: "中环/上环", note: "", dishes: "猪扒饭溏心蛋", city: "hk" },
-            { name: "金凤茶餐厅", type: "茶餐厅", lat: 22.2751, lng: 114.1728, address: "湾仔/尖沙咀", note: "", dishes: "", city: "hk" },
-            { name: "兰芳园", type: "茶餐厅", lat: 23.131, lng: 113.245, address: "中环/上环", note: "", dishes: "奶茶", city: "hk" },
-            { name: "新香园", type: "茶餐厅", lat: 22.33, lng: 114.161, address: "湾仔/尖沙咀", note: "", dishes: "麻辣蛋牛治、冻奶茶、蛋牛治、猪手面", city: "hk" },
-            { name: "利苑酒家", type: "正餐", lat: 22.2798, lng: 114.1789, address: "湾仔/尖沙咀", note: "", dishes: "烧肉烧腊", city: "hk" },
-            { name: "荣记饭店", type: "正餐", lat: 22.2783, lng: 114.1802, address: "湾仔宝灵顿道21号鹅颈熟食中心CF4号铺", note: "", dishes: "", city: "hk" },
-            { name: "莲香居", type: "正餐", lat: 22.2882, lng: 114.1448, address: "西营盘", note: "", dishes: "早茶", city: "hk" },
-            { name: "稻香", type: "正餐", lat: 22.3956, lng: 114.1963, address: "火炭店", note: "", dishes: "", city: "hk" },
-            { name: "端记茶楼", type: "正餐", lat: 22.3193, lng: 114.1694, address: "湾仔/尖沙咀", note: "", dishes: "早茶", city: "hk" },
-            { name: "莲香楼", type: "正餐", lat: 22.2842, lng: 114.1538, address: "中环", note: "", dishes: "", city: "hk" },
-            { name: "牛阵", type: "正餐", lat: 22.32, lng: 114.17, address: "湾仔/尖沙咀", note: "", dishes: "", city: "hk" },
-            { name: "源記甜品", type: "糖水", lat: 22.286, lng: 114.14, address: "中环/上环", note: "", dishes: "桑寄生蓮子蛋茶", city: "hk" },
-            { name: "佳佳甜品", type: "糖水", lat: 22.3056, lng: 114.169, address: "湾仔/尖沙咀", note: "", dishes: "芝麻糊 合桃糊 杏仁糊 蕃薯糖水 冰的白果薏米腐竹 冰的蛋花馬蹄露", city: "hk" },
-            { name: "福元湯圓", type: "糖水", lat: 22.2885, lng: 114.1932, address: "铜锣湾/北角", note: "", dishes: "", city: "hk" },
-            { name: "北角雞蛋仔", type: "小吃", lat: 22.2918, lng: 114.2008, address: "铜锣湾/北角", note: "", dishes: "", city: "hk" },
-            { name: "沾仔記", type: "小吃", lat: 22.2818, lng: 114.1552, address: "大咀角", note: "", dishes: "蝦子雲吞麵 竹昇麵", city: "hk" },
-            { name: "廟街興記", type: "小吃", lat: 22.3094, lng: 114.1702, address: "湾仔/尖沙咀", note: "", dishes: "煲仔飯+必食蠔餅", city: "hk" },
-            { name: "華香園", type: "小吃", lat: 22.2974, lng: 114.1691, address: "尖沙咀海防道", note: "", dishes: "豬扒包、西多士", city: "hk" },
-            { name: "媽咪雞蛋仔", type: "小吃", lat: 22.28, lng: 114.183, address: "铜锣湾/北角", note: "", dishes: "铜锣湾湾仔天后", city: "hk" },
-            { name: "合香園", type: "小吃", lat: 22.29, lng: 114.15, address: "中环/上环", note: "", dishes: "瓦煲奶茶", city: "hk" },
-            { name: "德發牛丸", type: "小吃", lat: 22.2974, lng: 114.1691, address: "湾仔/尖沙咀", note: "", dishes: "", city: "hk" },
-            { name: "水記", type: "小吃", lat: 22.2841, lng: 114.1538, address: "中环/上环", note: "", dishes: "牛腩 蛋白燉鮮奶 黑芝麻糊湯圓", city: "hk" },
-            { name: "生记", type: "小吃", lat: 22.2863, lng: 114.1512, address: "上环", note: "", dishes: "牛腩、鱼泡、鱼腩", city: "hk" },
-            { name: "荣记粉面", type: "小吃", lat: 22.2804, lng: 114.1857, address: "铜锣湾", note: "", dishes: "", city: "hk" },
-            { name: "文记", type: "小吃", lat: 22.3032, lng: 114.1856, address: "红磡市政大厦", note: "", dishes: "大排档型 可当正餐吃 晚上去 对面还有一家辣鱼蛋", city: "hk" },
-            { name: "Kabo", type: "小吃", lat: 22.298, lng: 114.172, address: "尖沙咀", note: "", dishes: "汉堡", city: "hk" },
-            { name: "英记面家", type: "小吃", lat: 22.285, lng: 114.14, address: "中环/上环", note: "仅现金支付", dishes: "叉烧牛腩面 牛杂捞面 金钱肚", city: "hk" },
-            { name: "达濠仔", type: "小吃", lat: 22.31, lng: 114.17, address: "湾仔/尖沙咀", note: "", dishes: "牛杂", city: "hk" },
-            { name: "卖奀记忠记", type: "小吃", lat: 22.2838, lng: 114.1542, address: "中环/上环", note: "", dishes: "", city: "hk" },
-            { name: "生记粥铺", type: "小吃", lat: 22.2863, lng: 114.1512, address: "中环/上环", note: "", dishes: "加猪润", city: "hk" },
-            { name: "蛇王芬", type: "小吃", lat: 22.2824, lng: 114.154, address: "中环", note: "", dishes: "五蛇羹", city: "hk" },
-            { name: "面尊", type: "小吃", lat: 22.28, lng: 114.185, address: "铜锣湾/中环", note: "", dishes: "车仔面", city: "hk" },
-            { name: "华姐清汤腩", type: "小吃", lat: 22.2825, lng: 114.1915, address: "铜锣湾/北角", note: "", dishes: "", city: "hk" },
-            { name: "乐园鱼蛋粉", type: "小吃", lat: 22.2804, lng: 114.1857, address: "铜锣湾", note: "", dishes: "港式鱼蛋粉", city: "hk" },
-            { name: "庙街牛什", type: "小吃", lat: 22.3094, lng: 114.1702, address: "湾仔/尖沙咀", note: "", dishes: "", city: "hk" },
-            { name: "红磡鸡蛋仔", type: "小吃", lat: 22.3032, lng: 114.1856, address: "铜锣湾/北角", note: "", dishes: "", city: "hk" },
-            { name: "兴记", type: "小吃", lat: 22.298, lng: 114.172, address: "湾仔/尖沙咀", note: "", dishes: "咖喱金钱肚", city: "hk" },
-            { name: "新兴食家", type: "小吃", lat: 22.285, lng: 114.14, address: "中环/上环", note: "", dishes: "炸鲜奶、鸡球大包", city: "hk" },
-            { name: "Bakehouse", type: "烘焙", lat: 22.2985, lng: 114.1735, address: "湾仔/尖沙咀", note: "蛋挞难吃", dishes: "甜甜圈和肉桂卷", city: "hk" },
-            { name: "vission", type: "烘焙", lat: 22.31953, lng: 114.16931, address: "香港", note: "", dishes: "bakery 牛角酥等填馅类", city: "hk" },
-            { name: "owls", type: "烘焙", lat: 22.31892, lng: 114.16994, address: "香港", note: "最多一人一个下午三点半才开门", dishes: "choux 泡芙", city: "hk" },
-            { name: "shari", type: "烘焙", lat: 22.31916, lng: 114.17033, address: "香港", note: "", dishes: "shari kakigori house冰屋", city: "hk" },
-            { name: "Tokachi", type: "烘焙", lat: 22.298, lng: 114.172, address: "湾仔/尖沙咀", note: "", dishes: "泡芙", city: "hk" },
-            { name: "棋哥", type: "烧腊", lat: 22.278, lng: 114.18, address: "铜锣湾/北角", note: "", dishes: "烧鹅脆皮", city: "hk" },
-            { name: "翠园", type: "烧腊", lat: 22.31913, lng: 114.16826, address: "香港", note: "", dishes: "新鲜", city: "hk" },
-            { name: "甘堂", type: "烧腊", lat: 22.2783, lng: 114.1758, address: "湾仔/尖沙咀", note: "", dishes: "烧鹅 甘子虾蹄 肉质好 烧味下垫蜜豆是老派做法", city: "hk" },
-            { name: "一乐", type: "烧腊", lat: 22.2824, lng: 114.1558, address: "中环/上环", note: "", dishes: "便宜 配饭要点油饭", city: "hk" },
-            { name: "鏞記酒家", type: "烧腊", lat: 22.2818, lng: 114.1552, address: "中环/上环", note: "", dishes: "精致综合可以", city: "hk" },
-            { name: "新桂香", type: "烧腊", lat: 22.27, lng: 114.238, address: "周润发也去", note: "", dishes: "", city: "hk" },
-            { name: "香港避风塘兴记", type: "海鲜", lat: 22.298, lng: 114.172, address: "湾仔/尖沙咀", note: "", dishes: "", city: "hk" },
-            { name: "国金轩", type: "海鲜", lat: 22.295, lng: 114.17, address: "湾仔/尖沙咀", note: "", dishes: "太史五蛇羹", city: "hk" },
-            { name: "疍家菜", type: "海鲜", lat: 22.31861, lng: 114.1694, address: "香港", note: "", dishes: "", city: "hk" },
-            { name: "海港荟", type: "海鲜", lat: 22.29805, lng: 114.17326, address: "尖沙咀", note: "", dishes: "", city: "hk" },
-            { name: "驹记海鲜大排档", type: "海鲜", lat: 22.27935, lng: 114.18462, address: "铜锣湾", note: "", dishes: "", city: "hk" },
-            { name: "喜记避风塘炒蟹", type: "海鲜", lat: 22.2792, lng: 114.1856, address: "铜锣湾", note: "", dishes: "", city: "hk" },
-            { name: "旺角果栏", type: "海鲜", lat: 22.31878, lng: 114.17084, address: "旺角", note: "", dishes: "开榴莲", city: "hk" },
-        ];
+    { name: "糊天甜品", type: "糖水", lat: 23.1285, lng: 113.2458, address: "一品为先食得好对面", note: "", dishes: "", city: "gz" },
+    { name: "兰芳园", type: "糖水", lat: 23.131, lng: 113.245, address: "西华路第一津", note: "", dishes: "", city: "gz" },
+    { name: "沙湾甜品", type: "糖水", lat: 23.1315, lng: 113.2455, address: "西华路第一津", note: "主要服务态度差", dishes: "招牌的奶制品 姜撞奶双皮奶凤凰炒奶糊", city: "gz" },
+    { name: "南信", type: "糖水", lat: 23.13053, lng: 113.26494, address: "广州", note: "", dishes: "比较综合 双皮奶 姜撞奶", city: "gz" },
+    { name: "开记", type: "糖水", lat: 23.1172, lng: 113.24768, address: "上下九", note: "", dishes: "绿豆沙、马蹄沙", city: "gz" },
+    { name: "百花甜品", type: "糖水", lat: 23.12891, lng: 113.26412, address: "广州", note: "", dishes: "番薯糖水 绿豆沙", city: "gz" },
+    { name: "玫瑰甜品", type: "糖水", lat: 23.12947, lng: 113.26523, address: "广州", note: "", dishes: "凤凰蛋奶糊", city: "gz" },
+    { name: "梁阿珍", type: "糖水", lat: 23.12947, lng: 113.26369, address: "广州", note: "", dishes: "云吞皮糖水", city: "gz" },
+    { name: "清润坊", type: "糖水", lat: 23.12808, lng: 113.2634, address: "广州", note: "", dishes: "南洋渣咂和龟苓膏", city: "gz" },
+    { name: "合众肠粉店", type: "其他", lat: 23.125, lng: 113.244, address: "龙津路", note: "", dishes: "", city: "gz" },
+    { name: "炜明肠粉店", type: "其他", lat: 23.128, lng: 113.248, address: "陈家祠附近", note: "", dishes: "", city: "gz" },
+    { name: "合兴小食店", type: "其他", lat: 23.1315, lng: 113.2455, address: "西华路第一津", note: "", dishes: "濑粉+咸菜 辣可以多放一点", city: "gz" },
+    { name: "德记", type: "其他", lat: 23.14, lng: 113.236, address: "老城区/荔湾", note: "", dishes: "", city: "gz" },
+    { name: "源记肠粉", type: "其他", lat: 23.125, lng: 113.24, address: "华贵路93号", note: "", dishes: "", city: "gz" },
+    { name: "穗银肠粉", type: "其他", lat: 23.124, lng: 113.284, address: "大东街道东川路94号之一(近东川新街市", note: "", dishes: "", city: "gz" },
+    { name: "顺势牛杂汤", type: "牛杂/下水", lat: 23.133, lng: 113.246, address: "金花街道太保直街与吉祥新街交叉口南80米", note: "", dishes: "牛三星汤", city: "gz" },
+    { name: "一品为先食得好", type: "牛杂/下水", lat: 23.1288, lng: 113.2455, address: "和安街67号", note: "", dishes: "鸡杂汤+猪杂汤", city: "gz" },
+    { name: "西关牛杂", type: "牛杂/下水", lat: 23.1315, lng: 113.2455, address: "西华路金花直街53号金发食杂店门口", note: "", dishes: "就是牛佬 牛杂+猪肠 牛三星和牛杂汤", city: "gz" },
+    { name: "南信", type: "牛杂/下水", lat: 23.12766, lng: 113.26299, address: "广州", note: "", dishes: "牛三星加一点腩汁", city: "gz" },
+    { name: "达扬炖品", type: "其他", lat: 23.1256, lng: 113.275, address: "向前走，德政路，大概500米，有分店，出品一样，位置多", note: "", dishes: "米其林必比登 除了椰子汤 还有鱼头炖汤等等更本地的汤", city: "gz" },
+    { name: "炳胜品味", type: "正餐", lat: 23.12994, lng: 113.26499, address: "广州", note: "", dishes: "", city: "gz" },
+    { name: "同发号", type: "正餐", lat: 23.13031, lng: 113.26302, address: "广州", note: "", dishes: "", city: "gz" },
+    { name: "万年胜记酒楼", type: "正餐", lat: 23.1289, lng: 113.26334, address: "广州", note: "", dishes: "", city: "gz" },
+    { name: "信记", type: "正餐", lat: 23.113, lng: 113.26, address: "越秀区长提大马路（一德路地铁站A口", note: "", dishes: "米其林一星", city: "gz" },
+    { name: "森焱食馆", type: "正餐", lat: 23.095, lng: 113.255, address: "海珠区同福西路", note: "", dishes: "椒盐九肚鱼 下酒菜比较咸", city: "gz" },
+    { name: "广州酒家", type: "正餐", lat: 23.12779, lng: 113.26587, address: "广州", note: "", dishes: "", city: "gz" },
+    { name: "梁家菜馆", type: "正餐", lat: 23.1277, lng: 113.26488, address: "广州", note: "", dishes: "", city: "gz" },
+    { name: "壹厨饭店", type: "正餐", lat: 23.12794, lng: 113.26385, address: "广州", note: "", dishes: "白切鸡", city: "gz" },
+    { name: "醉贤居", type: "正餐", lat: 23.13017, lng: 113.26483, address: "广州", note: "", dishes: "鸡不错", city: "gz" },
+    { name: "肥姐美食", type: "正餐", lat: 23.095, lng: 113.255, address: "环珠直街43号", note: "", dishes: "桶仔骨 金沙竹肠 葱油吊水鲩鱼 炒通菜和炒老友粉 冰镇黄鳝", city: "gz" },
+    { name: "多福美食馆", type: "正餐", lat: 23.1289, lng: 113.2658, address: "广州", note: "", dishes: "啫啫黄鳝煲和盐焗鹅翅", city: "gz" },
+    { name: "贰少品味", type: "正餐", lat: 23.096, lng: 113.254, address: "同福中路与伍家祠道交叉口西南240米", note: "", dishes: "主要吃水律蛇 但是现在似乎不能吃蛇 但其他菜性价比也可以", city: "gz" },
+    { name: "众源美食", type: "正餐", lat: 23.126, lng: 113.248, address: "光复北路555号", note: "", dishes: "打边炉比较出名", city: "gz" },
+    { name: "同乐居菜馆", type: "正餐", lat: 23.125, lng: 113.252, address: "惠福西路186号", note: "", dishes: "黄鳝啫啫煲、大肠", city: "gz" },
+    { name: "惠食佳", type: "正餐", lat: 23.107, lng: 113.265, address: "海珠", note: "", dishes: "铁板 生姜雪糕", city: "gz" },
+    { name: "白天鹅玉堂春暖", type: "早茶", lat: 23.12924, lng: 113.26347, address: "广州", note: "", dishes: "", city: "gz" },
+    { name: "广州宾馆", type: "早茶", lat: 23.12774, lng: 113.26447, address: "广州", note: "", dishes: "", city: "gz" },
+    { name: "宝汉酒家", type: "早茶", lat: 23.12881, lng: 113.26576, address: "广州", note: "", dishes: "", city: "gz" },
+    { name: "荣华楼", type: "早茶", lat: 23.12845, lng: 113.264, address: "广州", note: "", dishes: "", city: "gz" },
+    { name: "陶然轩", type: "早茶", lat: 23.109, lng: 113.298, address: "海珠", note: "", dishes: "手工", city: "gz" },
+    { name: "御宝轩", type: "早茶", lat: 23.1295, lng: 113.2638, address: "广州", note: "需要预约", dishes: "米二", city: "gz" },
+    { name: "喜势点茶居", type: "早茶", lat: 23.129, lng: 113.264, address: "老城区/荔湾", note: "", dishes: "沙翁", city: "gz" },
+    { name: "新文记", type: "其他", lat: 23.105, lng: 113.268, address: "市二宫地铁站附近", note: "", dishes: "", city: "gz" },
+    { name: "煲笼兴", type: "其他", lat: 23.111, lng: 113.262, address: "老店", note: "", dishes: "有点咸", city: "gz" },
+    { name: "丽的面家", type: "云吞面", lat: 23.125, lng: 113.27, address: "老城区/荔湾", note: "", dishes: "吃云吞面 偏港式 云吞偏大喜欢加鲜虾跟芝麻油 海鲜汤底 白灼猪润猪腰还不错", city: "gz" },
+    { name: "吴财记", type: "云吞面", lat: 23.115, lng: 113.245, address: "老城区/荔湾", note: "", dishes: "偏广式 云吞小巧 喜欢三肥七瘦纯肉 汤更顺滑", city: "gz" },
+    { name: "恩宁刘福记", type: "云吞面", lat: 23.125, lng: 113.286, address: "港式", note: "", dishes: "竹升面", city: "gz" },
+    { name: "旺记烧腊", type: "烧腊", lat: 23.122, lng: 113.238, address: "逢源路", note: "", dishes: "只吃烧鹅 烧鸭也不错 其他不行", city: "gz" },
+    { name: "永兴烧腊", type: "烧腊", lat: 23.114, lng: 113.244, address: "老城区/荔湾", note: "", dishes: "叉烧好吃 花叉", city: "gz" },
+    { name: "炳胜品味", type: "烧腊", lat: 23.12764, lng: 113.26516, address: "广州", note: "", dishes: "", city: "gz" },
+    { name: "立庆坊", type: "烧腊", lat: 23.12769, lng: 113.26519, address: "广州", note: "", dishes: "正宗马岗鹅", city: "gz" },
+    { name: "惠来", type: "烧腊", lat: 23.128, lng: 113.35, address: "龙岗路口对面", note: "", dishes: "吃鸡", city: "gz" },
+    { name: "云浮烧鸭", type: "烧腊", lat: 23.1417, lng: 113.2307, address: "鹅掌坦百德新街市门口", note: "", dishes: "", city: "gz" },
+    { name: "森成美食店", type: "烧腊", lat: 23.105, lng: 113.25, address: "南华西路73号", note: "", dishes: "脆皮烧肉无敌", city: "gz" },
+    { name: "金辉食馆", type: "烧腊", lat: 23.1017, lng: 113.2642, address: "海珠区同福中路金粟园12号", note: "", dishes: "豉油鸡好吃 不能吃田螺鸡", city: "gz" },
+    { name: "喜盈酒家", type: "烧腊", lat: 23.12982, lng: 113.26449, address: "广州", note: "", dishes: "烧鹅不错", city: "gz" },
+    { name: "旺金鸽", type: "乳鸽", lat: 23.12, lng: 113.32, address: "天河", note: "", dishes: "", city: "gz" },
+    { name: "鸽皇农庄", type: "乳鸽", lat: 23.18, lng: 113.35, address: "天河长湴店", note: "", dishes: "", city: "gz" },
+    { name: "悦宴酒家", type: "乳鸽", lat: 23.18, lng: 113.35, address: "龙洞店", note: "", dishes: "", city: "gz" },
+    { name: "顺得来", type: "脆皖", lat: 23.127, lng: 113.27, address: "五月花广场后门的小巷", note: "", dishes: "", city: "gz" },
+    { name: "伍湛记", type: "粥", lat: 23.119, lng: 113.24, address: "老城区/荔湾", note: "", dishes: "", city: "gz" },
+    { name: "标记美食", type: "粥", lat: 23.0135, lng: 113.3361, address: "海珠", note: "", dishes: "", city: "gz" },
+    { name: "德记", type: "粥", lat: 23.14, lng: 113.236, address: "老城区/荔湾", note: "", dishes: "", city: "gz" },
+    { name: "御手信", type: "伴手礼", lat: 23.128, lng: 113.275, address: "老城区/荔湾", note: "", dishes: "鸡仔饼 杏仁酥 红豆酥", city: "gz" },
+    { name: "华星冰室", type: "茶餐厅", lat: 22.31913, lng: 114.17082, address: "香港", note: "", dishes: "", city: "hk" },
+    { name: "金华冰厅", type: "茶餐厅", lat: 22.32002, lng: 114.16933, address: "香港", note: "", dishes: "菠萝包 奶茶", city: "hk" },
+    { name: "翠华餐厅", type: "茶餐厅", lat: 22.31914, lng: 114.16929, address: "香港", note: "", dishes: "", city: "hk" },
+    { name: "食光荣", type: "茶餐厅", lat: 22.31806, lng: 114.17065, address: "香港", note: "", dishes: "三眼仔必佩雞扒", city: "hk" },
+    { name: "金禾阁", type: "茶餐厅", lat: 22.38116, lng: 114.19316, address: "沙田", note: "", dishes: "鱼汤汤饭", city: "hk" },
+    { name: "美好快餐", type: "茶餐厅", lat: 22.38055, lng: 114.19313, address: "沙田", note: "", dishes: "西士多", city: "hk" },
+    { name: "源记", type: "茶餐厅", lat: 23.125, lng: 113.24, address: "尖沙咀", note: "", dishes: "", city: "hk" },
+    { name: "佳记餐厅", type: "茶餐厅", lat: 22.31852, lng: 114.16892, address: "香港", note: "", dishes: "西士多", city: "hk" },
+    { name: "泰昌饼家", type: "茶餐厅", lat: 22.3199, lng: 114.16999, address: "香港", note: "", dishes: "港式蛋挞", city: "hk" },
+    { name: "瑞记", type: "茶餐厅", lat: 22.31916, lng: 114.17019, address: "香港", note: "", dishes: "冻奶茶", city: "hk" },
+    { name: "科记咖啡餐厅", type: "茶餐厅", lat: 22.31959, lng: 114.17021, address: "香港", note: "", dishes: "猪扒饭溏心蛋", city: "hk" },
+    { name: "金凤茶餐厅", type: "茶餐厅", lat: 22.31907, lng: 114.16953, address: "香港", note: "", dishes: "", city: "hk" },
+    { name: "兰芳园", type: "茶餐厅", lat: 23.131, lng: 113.245, address: "中环/上环", note: "", dishes: "奶茶", city: "hk" },
+    { name: "新香园", type: "茶餐厅", lat: 22.31929, lng: 114.17005, address: "香港", note: "", dishes: "麻辣蛋牛治、冻奶茶、蛋牛治、猪手面", city: "hk" },
+    { name: "利苑酒家", type: "正餐", lat: 22.31822, lng: 114.1709, address: "香港", note: "", dishes: "烧肉烧腊", city: "hk" },
+    { name: "荣记饭店", type: "正餐", lat: 22.27594, lng: 114.1765, address: "湾仔", note: "", dishes: "", city: "hk" },
+    { name: "莲香居", type: "正餐", lat: 22.31933, lng: 114.16909, address: "香港", note: "", dishes: "早茶", city: "hk" },
+    { name: "稻香", type: "正餐", lat: 22.31996, lng: 114.169, address: "香港", note: "", dishes: "", city: "hk" },
+    { name: "端记茶楼", type: "正餐", lat: 22.31803, lng: 114.16805, address: "香港", note: "", dishes: "早茶", city: "hk" },
+    { name: "莲香楼", type: "正餐", lat: 22.28141, lng: 114.15924, address: "中环", note: "", dishes: "", city: "hk" },
+    { name: "牛阵", type: "正餐", lat: 22.31929, lng: 114.17066, address: "香港", note: "", dishes: "", city: "hk" },
+    { name: "源記甜品", type: "糖水", lat: 22.31822, lng: 114.17062, address: "香港", note: "", dishes: "桑寄生蓮子蛋茶", city: "hk" },
+    { name: "佳佳甜品", type: "糖水", lat: 22.31916, lng: 114.1695, address: "香港", note: "", dishes: "芝麻糊 合桃糊 杏仁糊 蕃薯糖水 冰的白果薏米腐竹 冰的蛋花馬蹄露", city: "hk" },
+    { name: "福元湯圓", type: "糖水", lat: 22.3194, lng: 114.16919, address: "香港", note: "", dishes: "", city: "hk" },
+    { name: "北角雞蛋仔", type: "小吃", lat: 22.291, lng: 114.19964, address: "北角", note: "", dishes: "", city: "hk" },
+    { name: "沾仔記", type: "小吃", lat: 22.31981, lng: 114.16939, address: "香港", note: "", dishes: "蝦子雲吞麵 竹昇麵", city: "hk" },
+    { name: "廟街興記", type: "小吃", lat: 22.31881, lng: 114.17058, address: "香港", note: "", dishes: "煲仔飯+必食蠔餅", city: "hk" },
+    { name: "華香園", type: "小吃", lat: 22.29767, lng: 114.17212, address: "尖沙咀", note: "", dishes: "豬扒包、西多士", city: "hk" },
+    { name: "媽咪雞蛋仔", type: "小吃", lat: 22.27918, lng: 114.18676, address: "铜锣湾", note: "", dishes: "铜锣湾湾仔天后", city: "hk" },
+    { name: "合香園", type: "小吃", lat: 22.31878, lng: 114.1698, address: "香港", note: "", dishes: "瓦煲奶茶", city: "hk" },
+    { name: "德發牛丸", type: "小吃", lat: 22.31852, lng: 114.17082, address: "香港", note: "", dishes: "", city: "hk" },
+    { name: "水記", type: "小吃", lat: 22.3199, lng: 114.16872, address: "香港", note: "", dishes: "牛腩 蛋白燉鮮奶 黑芝麻糊湯圓", city: "hk" },
+    { name: "生记", type: "小吃", lat: 22.28648, lng: 114.15002, address: "上环", note: "", dishes: "牛腩、鱼泡、鱼腩", city: "hk" },
+    { name: "荣记粉面", type: "小吃", lat: 22.27985, lng: 114.18499, address: "铜锣湾", note: "", dishes: "", city: "hk" },
+    { name: "文记", type: "小吃", lat: 23.105, lng: 113.268, address: "红磡市政大厦", note: "", dishes: "大排档型 可当正餐吃 晚上去 对面还有一家辣鱼蛋", city: "hk" },
+    { name: "Kabo", type: "小吃", lat: 22.29756, lng: 114.17261, address: "尖沙咀", note: "", dishes: "汉堡", city: "hk" },
+    { name: "英记面家", type: "小吃", lat: 22.3179, lng: 114.17074, address: "香港", note: "仅现金支付", dishes: "叉烧牛腩面 牛杂捞面 金钱肚", city: "hk" },
+    { name: "达濠仔", type: "小吃", lat: 22.31905, lng: 114.16811, address: "香港", note: "", dishes: "牛杂", city: "hk" },
+    { name: "卖奀记忠记", type: "小吃", lat: 22.31809, lng: 114.16813, address: "香港", note: "", dishes: "", city: "hk" },
+    { name: "生记粥铺", type: "小吃", lat: 22.3194, lng: 114.17071, address: "香港", note: "", dishes: "加猪润", city: "hk" },
+    { name: "蛇王芬", type: "小吃", lat: 22.28175, lng: 114.15735, address: "中环", note: "", dishes: "五蛇羹", city: "hk" },
+    { name: "面尊", type: "小吃", lat: 22.28116, lng: 114.15696, address: "中环", note: "", dishes: "车仔面", city: "hk" },
+    { name: "华姐清汤腩", type: "小吃", lat: 22.32072, lng: 114.16983, address: "香港", note: "", dishes: "", city: "hk" },
+    { name: "乐园鱼蛋粉", type: "小吃", lat: 22.28121, lng: 114.18669, address: "铜锣湾", note: "", dishes: "港式鱼蛋粉", city: "hk" },
+    { name: "庙街牛什", type: "小吃", lat: 22.31956, lng: 114.17077, address: "香港", note: "", dishes: "", city: "hk" },
+    { name: "红磡鸡蛋仔", type: "小吃", lat: 22.30182, lng: 114.18598, address: "红磡", note: "", dishes: "", city: "hk" },
+    { name: "兴记", type: "小吃", lat: 22.31902, lng: 114.16994, address: "香港", note: "", dishes: "咖喱金钱肚", city: "hk" },
+    { name: "新兴食家", type: "小吃", lat: 22.31844, lng: 114.16869, address: "香港", note: "", dishes: "炸鲜奶、鸡球大包", city: "hk" },
+    { name: "Bakehouse", type: "烘焙", lat: 22.31815, lng: 114.16822, address: "香港", note: "蛋挞难吃", dishes: "甜甜圈和肉桂卷", city: "hk" },
+    { name: "vission", type: "烘焙", lat: 22.32007, lng: 114.16889, address: "香港", note: "", dishes: "bakery 牛角酥等填馅类", city: "hk" },
+    { name: "owls", type: "烘焙", lat: 22.32076, lng: 114.17073, address: "香港", note: "最多一人一个下午三点半才开门", dishes: "choux 泡芙", city: "hk" },
+    { name: "shari", type: "烘焙", lat: 22.31812, lng: 114.16842, address: "香港", note: "", dishes: "shari kakigori house冰屋", city: "hk" },
+    { name: "Tokachi", type: "烘焙", lat: 22.31847, lng: 114.16977, address: "香港", note: "", dishes: "泡芙", city: "hk" },
+    { name: "棋哥", type: "烧腊", lat: 22.31804, lng: 114.17074, address: "香港", note: "", dishes: "烧鹅脆皮", city: "hk" },
+    { name: "翠园", type: "烧腊", lat: 22.31982, lng: 114.17002, address: "香港", note: "", dishes: "新鲜", city: "hk" },
+    { name: "甘堂", type: "烧腊", lat: 22.31954, lng: 114.16964, address: "香港", note: "", dishes: "烧鹅 甘子虾蹄 肉质好 烧味下垫蜜豆是老派做法", city: "hk" },
+    { name: "一乐", type: "烧腊", lat: 22.31981, lng: 114.16825, address: "香港", note: "", dishes: "便宜 配饭要点油饭", city: "hk" },
+    { name: "鏞記酒家", type: "烧腊", lat: 22.32032, lng: 114.16934, address: "香港", note: "", dishes: "精致综合可以", city: "hk" },
+    { name: "新桂香", type: "烧腊", lat: 22.31823, lng: 114.16909, address: "香港", note: "", dishes: "", city: "hk" },
+    { name: "香港避风塘兴记", type: "海鲜", lat: 22.31841, lng: 114.16944, address: "香港", note: "", dishes: "", city: "hk" },
+    { name: "国金轩", type: "海鲜", lat: 22.31988, lng: 114.17025, address: "香港", note: "", dishes: "太史五蛇羹", city: "hk" },
+    { name: "疍家菜", type: "海鲜", lat: 22.31866, lng: 114.16838, address: "香港", note: "", dishes: "", city: "hk" },
+    { name: "海港荟", type: "海鲜", lat: 22.29887, lng: 114.17364, address: "尖沙咀", note: "", dishes: "", city: "hk" },
+    { name: "驹记海鲜大排档", type: "海鲜", lat: 22.2818, lng: 114.18549, address: "铜锣湾", note: "", dishes: "", city: "hk" },
+    { name: "喜记避风塘炒蟹", type: "海鲜", lat: 22.28031, lng: 114.18484, address: "铜锣湾", note: "", dishes: "", city: "hk" },
+    { name: "旺角果栏", type: "海鲜", lat: 22.32045, lng: 114.1696, address: "旺角", note: "", dishes: "开榴莲", city: "hk" },
+];
 
         // --- CONSTANTS ---
         const colors = {
@@ -412,6 +421,14 @@
             } else {
                 renderMapAndList();
                 if (drawerState !== 'list') updateDrawer('list');
+            }
+
+            // Show Category Tip
+            if (categoryInfo[type]) {
+                categoryTip.classList.remove('hidden');
+                categoryTipText.innerText = categoryInfo[type];
+            } else {
+                categoryTip.classList.add('hidden');
             }
         }
 
@@ -614,6 +631,8 @@
         const selectedDiv = document.getElementById('selectedView');
         const filterContainer = document.getElementById('filterContainer');
         const dragArea = document.getElementById('dragArea');
+        const categoryTip = document.getElementById('categoryTip');
+        const categoryTipText = document.getElementById('categoryTipText');
 
         // Drawer Modes
         // 'list': Expanded, shows List.
@@ -622,24 +641,27 @@
 
         function updateDrawer(state) {
             drawerState = state;
-            const filterHeight = filterContainer.offsetHeight + 60; // Approximate header height including handle
+            // Dynamic height based on content?
+            // For 'list', we want it to cover maybe 50% or 60% default, expandable?
+            // Let's use 55vh for list default
 
             if (state === 'list') {
                 listDiv.classList.remove('hidden');
                 selectedDiv.classList.add('hidden');
-                drawer.style.height = '85vh'; // Reset to full height
-                drawer.style.transform = `translateY(0)`; // Full height available
+                drawer.style.height = '50vh'; // FIXED: List view height (allow map visibility)
+                drawer.style.transform = `translateY(0)`;
             }
             else if (state === 'collapsed') {
-                // Show list (peek) or card (bottom peek) - usually Filter Row is what we want visible
-                // For 'collapsed', we hide everything except header
-                drawer.style.transform = `translateY(calc(100% - ${filterHeight}px))`;
+                // Peek height: Filter height + tip height?
+                // Just peek enough for filters.
+                // We use a fixed peek calculation.
+                drawer.style.height = 'auto'; // Let it shrink? No, transition needs fixed.
+                drawer.style.transform = `translateY(calc(100% - 110px))`; // Peek 110px
             }
             else if (state === 'card') {
                 listDiv.classList.add('hidden');
                 selectedDiv.classList.remove('hidden');
-                // Card mode: We already set height to 60vh in selectPlace
-                // But let's reinforce or ensure transform is 0
+                drawer.style.height = 'auto'; // Allow card to define height
                 drawer.style.transform = `translateY(0)`;
             }
         }
