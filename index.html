@@ -270,6 +270,14 @@
                 2. <strong>使用方便</strong>：便利店 (7-11) 也能用，无需备零钱。
             </p>
         </div>
+
+        <div class="mt-6 flex justify-center">
+            <a href="food_map.html"
+                class="inline-flex items-center gap-2 px-8 py-3 bg-mag-gold text-mag-navy font-serif font-bold text-lg rounded-full shadow-lg hover:bg-yellow-500 transition-all transform hover:scale-105 hover:shadow-xl border-2 border-mag-navy/10">
+                <i class="fa-solid fa-utensils"></i>
+                开启美食地图
+            </a>
+        </div>
     </header>
 
     <div
@@ -293,6 +301,10 @@
             <a href="#d6"
                 class="px-4 py-2 text-xs font-bold bg-white border border-gray-200 rounded-full hover:bg-gray-50 text-gray-700 shadow-sm">D6
                 终章</a>
+            <a href="food_map.html"
+                class="px-4 py-2 text-xs font-bold bg-mag-navy border border-mag-navy rounded-full text-white shadow-sm flex items-center gap-1 hover:bg-sky-900 transition-colors">
+                <i class="fa-solid fa-map-location-dot"></i> 美食地图
+            </a>
         </div>
     </div>
 
@@ -355,8 +367,9 @@
                 <div class="flex items-center gap-2 mb-2">
                     <span class="tag-time">12:30</span>
                 </div>
-                <h3 class="text-xl mb-1" contenteditable="true">陶陶居 / 点都德</h3>
-                <div class="tag-warn" contenteditable="true">⚠️ 春节排队30min+</div>
+                <h3 class="text-xl mb-1" contenteditable="true">万年胜记酒楼 (推荐)</h3>
+                <p class="text-sm text-gray-600 mb-1" contenteditable="true">越秀南路老字号。招牌: 烧鹅、真味鸡。</p>
+                <div class="tag-tip" contenteditable="true">备选: 信记海鲜饭店 (米其林)</div>
             </div>
 
             <div class="transport-strip">
@@ -408,6 +421,28 @@
             </div>
 
             <div class="transport-strip">
+                <i class="fa-solid fa-train"></i>
+                <div class="w-full" contenteditable="true">
+                    <strong>地铁 1号线</strong>
+                    <div class="text-xs text-gray-500">
+                        公园前 -> 农讲所 (C口出)。
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-base type-meal">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">17:30</span>
+                </div>
+                <h3 class="text-xl mb-1" contenteditable="true">农讲所美食 & 伴手礼</h3>
+                <ul class="text-sm text-gray-600 space-y-1" contenteditable="true">
+                    <li>1. <strong>百花甜品 / 达扬炖品</strong> (文明路)</li>
+                    <li>2. <strong>御手信</strong> (中华广场) - <em>买伴手礼</em></li>
+                </ul>
+            </div>
+
+            <div class="transport-strip">
                 <i class="fa-solid fa-taxi"></i>
                 <div class="w-full" contenteditable="true"><strong>打车</strong> 至沙面。</div>
             </div>
@@ -441,7 +476,8 @@
                 <div class="flex items-center gap-2 mb-2">
                     <span class="tag-time">20:15</span>
                 </div>
-                <h3 class="text-xl mb-1" contenteditable="true">西关美食 (晚餐)</h3>
+                <h3 class="text-xl mb-1" contenteditable="true">广州酒家 (文昌总店)</h3>
+                <p class="text-sm text-gray-600" contenteditable="true">西关老字号，环境优雅。备选: 惠食佳 (滨江)。</p>
             </div>
         </section>
 
@@ -449,6 +485,16 @@
         <section id="d2" class="timeline-container">
             <div class="section-header">
                 <h2 class="font-serif text-2xl font-bold text-mag-navy">02.19 周四 | 长隆 & 广州塔</h2>
+            </div>
+
+            <div class="card-base type-meal">
+                <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="tag-time">08:00</span>
+                </div>
+                <h3 class="text-xl mb-1" contenteditable="true">早茶: 广州宾馆 (银灯食府) / 陶然轩</h3>
+                <p class="text-sm text-gray-600 mt-1" contenteditable="true">首选: 银灯食府 (酒店旁, 方便)。</p>
+                <div class="tag-tip" contenteditable="true">若想挑战高端: 白天鹅/陶然轩 (沙面, 需7:30前排队)</div>
             </div>
 
             <div class="transport-strip">
@@ -492,7 +538,8 @@
 
             <div class="card-base type-meal">
                 <i class="fa-regular fa-circle icon-check" onclick="toggle(this)"></i>
-                <h3 class="text-xl mb-1" contenteditable="true">炳胜品味 (晚餐)</h3>
+                <h3 class="text-xl mb-1" contenteditable="true">炳胜品味 (珠江新城店)</h3>
+                <p class="text-sm text-gray-600 mt-1" contenteditable="true">必点: 黑叉烧、鱼生、菠萝包。</p>
                 <div class="tag-tip" contenteditable="true">需提前取号</div>
             </div>
         </section>
@@ -507,7 +554,11 @@
                 <div class="flex items-center gap-2 mb-2">
                     <span class="tag-time">08:00 - 09:30</span>
                 </div>
-                <h3 class="text-lg font-bold" contenteditable="true">早茶 (华厦大酒店内)</h3>
+                <h3 class="text-lg font-bold" contenteditable="true">早茶: 稻香酒家 / 陶陶居</h3>
+                <p class="text-sm text-gray-600 mt-1" contenteditable="true">
+                    首选: 稻香 (华厦大酒店2楼, 最方便);<br>
+                    备选: 陶陶居 (解放北路店, 离别前叹茶)。
+                </p>
             </div>
 
             <div class="transport-strip"><i class="fa-solid fa-bus"></i>
@@ -884,13 +935,15 @@
                             (至荷李活道)</strong></li>
                     <li><i class="fa-solid fa-arrow-right text-gray-300 mx-2"></i> <strong>大馆 (Tai Kwun)</strong></li>
                     <li><i class="fa-solid fa-arrow-right text-gray-300 mx-2"></i> <strong>荷李活道</strong> (文武庙) ->
-                        <strong>摩罗上街 (古董街)</strong></li>
+                        <strong>摩罗上街 (古董街)</strong>
+                    </li>
                     <li><i class="fa-solid fa-arrow-turn-down text-gray-300 mx-2"></i> <span
                             class="text-xs text-gray-400">折返/步行至威灵顿街</span></li>
                     <li><i class="fa-solid fa-arrow-right text-gray-300 mx-2"></i> <strong>艺穗会 (Fringe Club)</strong>
                         (经典红白砖建筑)</li>
                     <li><strong class="text-mag-navy text-xs">下半场:</strong> <strong>嘉咸街壁画</strong> ->
-                        <strong>石板街</strong></li>
+                        <strong>石板街</strong>
+                    </li>
                     <li><i class="fa-solid fa-arrow-right text-gray-300 mx-2"></i> <strong>都爹利街 (煤气灯)</strong></li>
                     <li>🛍️ 手信: <strong>八珍酱园</strong></li>
                 </ul>
